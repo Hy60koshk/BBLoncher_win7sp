@@ -1,12 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
 namespace YobaLoncher {
 	static class Program {
-		public readonly static string SETTINGS_URL = "https://koshk.ru/battlebrothers/settings.json";
+		public readonly static string SETTINGS_URL = "https://koshk.sbs/battlebrothers/settings.json";
 		
 		public static LauncherData LoncherSettings;
 		public static bool OfflineMode = false;
@@ -25,7 +26,7 @@ namespace YobaLoncher {
 		public static string VersionInfo => String.Format(_about, _version, _buildNumber, _buildVersion);
 
 		private static string _loncherName = "YobaLoncher";
-		private static string _version = "1.0.2.4-win7";
+		private static string _version = "1.0.2.5-win7";
 		private static string _buildVersion = "1.1";
 		private static string _buildNumber = "";
 		private static string _about = "YobaLöncher {0}-{1}";
@@ -42,6 +43,11 @@ namespace YobaLoncher {
 					Directory.CreateDirectory(LoncherDataPath);
 				}
 				try {
+					ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
+						| SecurityProtocolType.Tls11
+						| SecurityProtocolType.Tls12
+						| SecurityProtocolType.Ssl3;
+
 					if (Resource1.BuildTargetOpts.Length > 0) {
 						string[] build = Resource1.BuildTargetOpts.Replace("\r", "").Split('\n');
 						if (build.Length > 0) {

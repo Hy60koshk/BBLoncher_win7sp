@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace YobaLoncher {
-	class CheckResult {
+	public class CheckResult {
 		public bool IsAllOk = true;
 		public LinkedList<FileInfo> InvalidFiles = new LinkedList<FileInfo>();
 	}

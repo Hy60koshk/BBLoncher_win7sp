@@ -116,6 +116,7 @@ namespace YobaLoncher {
 			, { "UninstallMod", "Uninstall" }
 			, { "EnableMod", "Enable" }
 			, { "DisableMod", "Disable" }
+			, { "ModNotFound", "Mod not found" }
 			, { "NeedsDonationMod", "This mod needs your donations" }
 			, { "DeleteModError", "An error occured while trying to delete the mod:\r\n\r\n{0}" }
 			, { "DisableModError", "An error occured while trying to disable the mod:\r\n\r\n{0}" }
@@ -131,6 +132,15 @@ namespace YobaLoncher {
 			, { "ModHasDependency", "{0} Mod has dependencies. Please, activate the following mod: {1}" }
 			, { "ModHasDependencies", "{0} Mod has dependencies. Please, activate one of the following mods:\r\n{1}" }
 			, { "ModHasDependenciesButNoneAvailable", "{0} Mod has dependencies, yet none of them are available. Please, contact the admins." }
+			, { "ModConflictsHintTitle", "Mod Conflicts" }
+			, { "ModConflictsHintTextSingle", "This mod conflicts with:[n]" }
+			, { "ModConflictsHintTextPlural", "This mod conflicts with:[n]" }
+			, { "ModDependenciesHintTitle", "Mod Dependencies" }
+			, { "ModDependenciesHintTextSingle", "This mod requires the following mod to work:[n]" }
+			, { "ModDependenciesHintTextPlural", "This mod requires the following mods to work:[n]" }
+			, { "ModDependenciesHintOR", "OR" }
+			, { "ModNotesHintTitle", "Installation Instructions" }
+			, { "ModNeedsUpdateHintTitle", "Update Available" }
 			, { "SameFileWithDifferentHashWarning", "Data file entries with different hashes have been detected in the configuration file for the \"{0}\". Please, report this issue to the launcher's distributor." }
 			, { "SameFileWithDifferentHashBetweenModsWarning", "Different mods infos contain different hashes for file \"{0}\". Please, report this issue to the launcher's distributor." }
 			, { "ScanningDataFolder", "Scanning Data folder" }

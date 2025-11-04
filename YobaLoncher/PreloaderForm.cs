@@ -329,12 +329,12 @@ namespace YobaLoncher {
 			if (LauncherConfig.NewFeaturesNotes == null) {
 				LauncherConfig.NewFeaturesNotes = new Dictionary<string, bool>();
 			}
-			if (!LauncherConfig.NewFeaturesNotes.ContainsKey("CompactMods")) {
+			/*if (!LauncherConfig.NewFeaturesNotes.ContainsKey("CompactMods")) {
 				LauncherConfig.NewFeaturesNotes.Add("CompactMods", true);
 				if (YobaDialog.ShowDialog(Locale.Get("NewFeatureCompactMods"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
 					LauncherConfig.ModsCompactMode = true;
 				}
-			}
+			}*/
 			MainForm mainForm = new MainForm();
 			mainForm.Icon = Program.LoncherSettings.Icon;
 			_progressBar1.Value = 99;

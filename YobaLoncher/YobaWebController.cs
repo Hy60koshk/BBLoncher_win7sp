@@ -163,7 +163,7 @@ namespace YobaLoncher {
 					modList_ = new List<WebModInfo>();
 					for (int i = 0; i < Program.LoncherSettings.Mods.Count; i++) {
 						ModInfo mod = Program.LoncherSettings.Mods[i];
-						if (mod.CurrentVersionFiles != null) {
+						if (mod.FilesForLatestVersion != null) {
 							modList_.Add(new WebModInfo(mod));
 						}
 					}
@@ -292,10 +292,10 @@ namespace YobaLoncher {
 
 			internal async void InstallModAsync(ModInfo mi) {
 				uint size = 0;
-				if (mi.CurrentVersionFiles[0].Size == 0) {
-					await FileChecker.CheckFiles(mi.CurrentVersionFiles);
+				if (mi.FilesForLatestVersion[0].Size == 0) {
+					await FileChecker.CheckFiles(mi.FilesForLatestVersion);
 				}
-				foreach (FileInfo fi in mi.CurrentVersionFiles) {
+				foreach (FileInfo fi in mi.FilesForLatestVersion) {
 					if (!fi.IsOK) {
 						size += fi.Size;
 					}

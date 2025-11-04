@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace YobaLoncher {
@@ -28,7 +27,7 @@ namespace YobaLoncher {
 		}
 
 		private async Task<bool> FinalizeModDownload(ModInfo modInfo) {
-			List<FileInfo> files = modInfo.CurrentVersionFiles;
+			List<FileInfo> files = modInfo.FilesForLatestVersion;
 			int progressStep = progressBarInfo_.MaxValue / files.Count;
 			bool success = false;
 			string filename = "";
@@ -85,13 +84,14 @@ namespace YobaLoncher {
 			}
 			if (currentMod_ != null) {
 				if (currentFile_ is null) {
-					var modFileList = new LinkedList<FileInfo>(currentMod_.Value.CurrentVersionFiles.FindAll(fi => !fi.IsOK && fi.HasValidInfo));
+					var modFileList = new LinkedList<FileInfo>(currentMod_.Value.FilesForLatestVersion.FindAll(fi => !fi.IsOK && fi.HasValidInfo));
 					if (modFileList.Count > 0) {
 						currentFile_ = modFileList.First;
 						DownloadFile(currentFile_.Value);
 					}
 					else {
 						currentMod_.Value.Install();
+						currentMod_.Value.IsUpdateAvailable = false;
 						DownloadNextMod();
 					}
 				}

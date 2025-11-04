@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Text;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -183,6 +182,42 @@ namespace YobaLoncher {
 			PerformLayout();
 		}
 
+		public void CheckModUpdate(string midId) {
+			if (!UpdateInProgress_) {
+				return;
+			}
+			ModInfo mi = Program.LoncherSettings.AvailableMods.Find(m => m.Id == midId);
+			if (mi == null) {
+				YobaDialog.ShowDialog(String.Format(Locale.Get("ModNotFound")));
+				return;
+			}
+
+			uint outdatedmodssize = 0;
+			foreach (FileInfo mif in mi.FilesForLatestVersion) {
+				if (!mif.IsOK) {
+					outdatedmodssize += mif.Size;
+				}
+			}
+			if (outdatedmodssize < 1) {
+				if (Program.OfflineMode) {
+					YobaDialog.ShowDialog(String.Format(Locale.Get("LauncherIsInOfflineMode")));
+				}
+				else {
+					if (DialogResult.Yes == YobaDialog.ShowDialog(
+							String.Format(Locale.Get("YouHaveOutdatedMods"), mi.VersionedName, YU.formatFileSize(outdatedmodssize))
+							, YobaDialog.YesNoBtns)) {
+						if (!UpdateInProgress_) {
+							modsToUpdate_ = new LinkedList<ModInfo>();
+							modsToUpdate_.AddLast(mi);
+							mi.DlInProgress = true;
+							UpdateModsWebView();
+							DownloadNextMod();
+						}
+					}
+				}
+			}
+		}
+
 		public void CheckModUpdates() {
 			LinkedList<ModInfo> outdatedMods = new LinkedList<ModInfo>();
 			ulong outdatedmodssize = 0;
@@ -193,12 +228,13 @@ namespace YobaLoncher {
 			foreach (ModInfo mi in availableMods) {
 				if (mi.IsActive) {
 					bool hasIt = false;
-					foreach (FileInfo mif in mi.CurrentVersionFiles) {
+					foreach (FileInfo mif in mi.FilesForLatestVersion) {
 						if (!mif.IsOK) {
 							outdatedmodssize += mif.Size;
 							if (!hasIt) {
 								hasIt = true;
 								outdatedMods.AddLast(mi);
+								mi.IsUpdateAvailable = true;
 							}
 							if (!mif.IsPresent) {
 								isAllPresent = false;
@@ -208,7 +244,7 @@ namespace YobaLoncher {
 				}
 				else {
 					bool modIsIntact = true;
-					foreach (FileInfo fi in mi.CurrentVersionFiles) {
+					foreach (FileInfo fi in mi.FilesForLatestVersion) {
 						if (!fi.IsOK) {
 							modIsIntact = false;
 							break;
@@ -222,16 +258,16 @@ namespace YobaLoncher {
 			}
 			UpdateModsWebView();
 			if (outdatedMods.Count > 0) {
-				string outdatedmods = "";
+				string outdatedModsStr = "";
 				foreach (ModInfo mi in outdatedMods) {
-					outdatedmods += "\r\n" + mi.VersionedName;
+					outdatedModsStr += "\r\n" + mi.VersionedName;
 				}
 				if (Program.OfflineMode) {
-					YobaDialog.ShowDialog(String.Format(Locale.Get("YouHaveOutdatedModsAndMissingFilesOffline"), outdatedmods));
+					YobaDialog.ShowDialog(String.Format(Locale.Get("YouHaveOutdatedModsAndMissingFilesOffline"), outdatedModsStr));
 				}
 				else {
 					if (DialogResult.Yes == YobaDialog.ShowDialog(
-							String.Format(Locale.Get(isAllPresent ? "YouHaveOutdatedMods" : "YouHaveOutdatedModsAndMissingFiles"), outdatedmods, YU.formatFileSize(outdatedmodssize))
+							String.Format(Locale.Get(isAllPresent ? "YouHaveOutdatedMods" : "YouHaveOutdatedModsAndMissingFiles"), outdatedModsStr, YU.formatFileSize(outdatedmodssize))
 							, YobaDialog.YesNoBtns)) {
 						modsToUpdate_ = outdatedMods;
 						foreach (ModInfo mi in outdatedMods) {
@@ -304,12 +340,13 @@ namespace YobaLoncher {
 			foreach (ModInfo mi in availableMods) {
 				if (mi.IsActive) {
 					bool hasIt = false;
-					foreach (FileInfo mif in mi.CurrentVersionFiles) {
+					foreach (FileInfo mif in mi.FilesForLatestVersion) {
 						if (!mif.IsOK) {
 							outdatedmodssize += mif.Size;
 							if (!hasIt) {
 								hasIt = true;
 								outdatedMods.AddLast(mi);
+								mi.IsUpdateAvailable = true;
 							}
 							if (!mif.IsPresent) {
 								isAllPresent = false;
@@ -320,7 +357,7 @@ namespace YobaLoncher {
 				}
 				else {
 					bool modIsIntact = true;
-					foreach (FileInfo fi in mi.CurrentVersionFiles) {
+					foreach (FileInfo fi in mi.FilesForLatestVersion) {
 						if (!fi.IsOK) {
 							modIsIntact = false;
 							break;
@@ -335,16 +372,16 @@ namespace YobaLoncher {
 			}
 			UpdateModsWebView();
 			if (outdatedMods.Count > 0) {
-				string outdatedmods = "";
+				string outdatedModsStr = "";
 				foreach (ModInfo mi in outdatedMods) {
-					outdatedmods += "\r\n" + mi.VersionedName;
+					outdatedModsStr += "\r\n" + mi.VersionedName;
 				}
 				if (Program.OfflineMode) {
-					YobaDialog.ShowDialog(String.Format(Locale.Get("YouHaveOutdatedModsAndMissingFilesOffline"), outdatedmods));
+					YobaDialog.ShowDialog(String.Format(Locale.Get("YouHaveOutdatedModsAndMissingFilesOffline"), outdatedModsStr));
 				}
 				else {
 					if (DialogResult.Yes == YobaDialog.ShowDialog(
-							String.Format(Locale.Get(isAllPresent ? "YouHaveOutdatedMods" : "YouHaveOutdatedModsAndMissingFiles"), outdatedmods, YU.formatFileSize(outdatedmodssize))
+							String.Format(Locale.Get(isAllPresent ? "YouHaveOutdatedMods" : "YouHaveOutdatedModsAndMissingFiles"), outdatedModsStr, YU.formatFileSize(outdatedmodssize))
 							, YobaDialog.YesNoBtns)) {
 						modsToUpdate_ = outdatedMods;
 						foreach (ModInfo mi in outdatedMods) {
