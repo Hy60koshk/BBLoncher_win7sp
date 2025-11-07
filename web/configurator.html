@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
+<link href='images/icon.png' rel='icon' type='image/png'/>
+<title>Конфигуратор BBLöncher</title>
+<script language='JavaScript' src='/js/jquery-3.5.1.min.js' type='text/javascript'></script>
+<script language='JavaScript' src='/js/kb.collections.js' type='text/javascript'></script>
+<script language='JavaScript' src='/js/koshkbench_1.6.js' type='text/javascript'></script>
+
+<link href='https://koshk.sbs/css/kbcore.css' rel='StyleSheet' type='text/css'/>
+<link href='https://koshk.sbs/koshkbench/css/kbench.css' rel='StyleSheet' type='text/css'/>
+<script>
+;var CookieObject = (function() {
+	var cookieObj = {}
+	var decodedCookie = decodeURIComponent(document.cookie);
+	var cookies = decodedCookie.split(';');
+
+	for (let i = 0; i < cookies.length; i++) {
+		let cookie = cookies[i].split('=')
+		if (cookie.length < 2) continue
+		let cookieKey = cookie[0].trim()
+		cookieObj[cookieKey] = cookie[1]
+	}
+
+	return cookieObj
+})();
+
+var adminIdSet = false, adminId = null, loadingBlocker$ = null;
+
+$.ajaxSetup({ cache: false });
+
+function onOperationSuccess(data, _adminId, successMsg) {
+	if (data.success) {
+		if (!adminIdSet) {
+			document.cookie = 'adminId=' + _adminId + '; expires=Fri, 30 Dec 2050 13:37:00 GMT; SameSite=Strict';
+			adminId = _adminId
+			adminIdSet = true
+		}
+		if (successMsg !== undefined) {
+			alert("\r\n\r\n" + successMsg + "\r\n\r\n")
+		}
+	} else {
+		alert("\r\n\r\n" + data.error + "\r\n\r\n")
+	}
+}
+
+function cfgApiCall(args, onSuccess, onFail) {
+	args = args || {}
+	args.adminToken = adminId || adminIdInput$.val()
+	
+	loadingBlocker$.show()
+
+	$.ajax({
+		url: "cfgapi.php"
+		, method: "POST"
+		, dataType: "json"
+		, data: args
+		, success: function(data) {
+			loadingBlocker$.hide()
+			if (data.success) {
+				if (typeof onSuccess === "string") {
+					onOperationSuccess(data, args.adminToken, onSuccess)
+				}
+				else {
+					onOperationSuccess(data, args.adminToken)
+					if (onSuccess) {
+						onSuccess(data)
+					}
+				}
+			}
+			else if (onFail) {
+				onFail(data)
+			}
+			else {
+				alert("Ошибка:\r\n" + data.error)
+			}
+		}
+		, error: function(xr, errortext, exception) {
+			loadingBlocker$.hide()
+			alert(errortext + ":\r\n" + exception)
+			if (onFail) {
+				onFail()
+			}
+		}
+	})
+}
+
+$(function() {
+	(function() {
+	HTMLElement.prototype.appendTag = function(tag) {
+		return this.appendChild(document.createElement(tag))
+	}
+	HTMLElement.prototype.prependTag = function(tag) {
+		var prepended = document.createElement(tag)
+		this.prepend(prepended)
+		return prepended
+	}
+	HTMLElement.prototype.attr = function(attr, value) {
+		this.setAttribute(attr, value)
+		return this
+	}
+	HTMLElement.prototype.onCheckedChange = function(callback) {
+		this.addEventListener('change', (event) => { callback(event.target.checked) })	
+		return this
+	}
+	HTMLElement.prototype.checkChange = function(value) {
+		this.checked = value
+		var evt = document.createEvent("HTMLEvents");
+		evt.initEvent("change", false, true);
+		this.dispatchEvent(evt);
+		return this
+	}
+	var _ge = function(id) { return document.getElementById(id) }
+	var _trackChange = function(id, callback) {
+		_ge(id).addEventListener('change', (event) => { callback(event.target.checked) })	
+	}
+
+	loadingBlocker$ = $('#loadingBlocker')
+
+	function SettingsFieldInput(fieldData) {
+		var valType = fieldData.ValType
+		var forbidden = fieldData.Forbidden
+		var allowEmpty = fieldData.AllowEmpty
+		this.Key = fieldData.Key
+		this.Container$ = $('<div class="settingInputContainer inputField">')
+		if (fieldData.Class) {
+			this.Container$.addClass(fieldData.Class)
+		}
+		var label$ = $('<span class="settingLabel">').appendTo(this.Container$).text(fieldData.Label)
+		var input$;
+		if (fieldData.TextArea) {
+			input$ = $('<textarea class="settingInput">').appendTo(this.Container$)
+			if (fieldData.Height) {
+				input$.css('height', fieldData.Height)
+			}
+		}
+		else {
+			input$ = $('<input type="text" class="settingInput" autocomplete="off">').appendTo(this.Container$)
+		}
+		if (fieldData.Title) {
+			label$.attr('title', fieldData.Title)
+		}
+		if (fieldData.Width) {
+			input$.css('width', fieldData.Width)
+		}
+		this.val = function() {
+			if (arguments.length) {
+				return input$.val(arguments[0])
+			}
+			var thevalue = input$.val()
+			if (valType) {
+				try {
+					if (valType == 'int') {
+						thevalue = parseInt(thevalue)
+						return isNaN(thevalue) ? undefined : thevalue
+					}
+					else if (valType == 'float') {
+						thevalue = parseFloat(thevalue)
+						return isNaN(thevalue) ? undefined : thevalue
+					}
+				} catch {
+					return undefined
+				}
+			}
+			thevalue = "" + thevalue
+			if (forbidden) {
+				var accept = true
+				for (var brrbrr = 0; brrbrr < forbidden.length; brrbrr++) {
+					if (!(accept = (thevalue.indexOf(forbidden[brrbrr]) < 0))) {
+						var errorstr = "Ошибка:\n" + fieldData.Key + " имеет недопустимое значение " + thevalue
+						alert(errorstr)
+						throw errorstr
+					}
+				}
+			}
+			return (thevalue.length || allowEmpty) ? thevalue : undefined
+		}
+		this.reset = function() {
+			input$.val('')
+		}
+	}
+	function SettingsFieldList(fieldData) {
+		this.Key = fieldData.Key
+		this.Container$ = $('<div class="settingInputContainer inputList">')
+		if (fieldData.Class) {
+			this.Container$.addClass(fieldData.Class)
+		}
+		var label$ = $('<span class="settingLabel">').appendTo(this.Container$).text(fieldData.Label)
+		if (fieldData.Title) {
+			label$.attr('title', fieldData.Title)
+		}
+		var input$ = $('<textarea class="settingList" rows=3>').appendTo(this.Container$)
+		if (fieldData.Width) {
+			input$.css('width', fieldData.Width)
+		}
+		if (fieldData.Rows) {
+			input$.attr('rows', fieldData.Rows)
+		}
+		this.val = function() {
+			if (arguments.length) {
+				return input$.val(arguments[0].join('\n'))
+			}
+			var vall = input$.val()
+			return vall.length ? vall.split('\n') : undefined
+		}
+		this.reset = function() {
+			input$.val('')
+		}
+	}
+	function SettingsFieldListoflists(fieldData) {
+		this.Key = fieldData.Key
+		this.Container$ = $('<div class="settingInputContainer inputListOfLists">')
+		if (fieldData.Class) {
+			this.Container$.addClass(fieldData.Class)
+		}
+		var label$ = $('<span class="settingLabel">').appendTo(this.Container$).text(fieldData.Label)
+		if (fieldData.Title) {
+			label$.attr('title', fieldData.Title)
+		}
+		var input$ = $('<textarea class="settingList" rows=3>').appendTo(this.Container$)
+		if (fieldData.Width) {
+			input$.css('width', fieldData.Width)
+		}
+		if (fieldData.Rows) {
+			input$.attr('rows', fieldData.Rows)
+		}
+		this.val = function() {
+			var vall, ll, line;
+			if (arguments.length) {
+				vall = ""
+				if (arguments[0] && arguments[0].length) {
+					for (ll = 0; ll < arguments[0].length; ll++) {
+						vall += arguments[0][ll].join('|') + '\n'
+					}
+				}
+				return input$.val(vall)
+			}
+			vall = input$.val().trim()
+			if (vall.length) {
+				vall = vall.split('\n')
+				for (ll = 0; ll < vall.length; ll++) {
+					line = vall[ll].trim()
+					if (line.length) {
+						vall[ll] = line.split('|')
+					}
+					else {
+						vall.splice(ll, 1)
+						ll--
+					}
+				}
+				return vall
+			}
+			return undefined
+		}
+		this.reset = function() {
+			input$.val('')
+		}
+	}
+	function SettingsFieldCheck(fieldData) {
+		this.Key = fieldData.Key
+		var _important = fieldData.Important
+		this.Container$ = $('<div class="settingInputContainer check">')
+		if (fieldData.Class) {
+			this.Container$.addClass(fieldData.Class)
+		}
+		var label$ = $('<label class="settingLabel">').appendTo(this.Container$)
+		if (fieldData.Title) {
+			label$.attr('title', fieldData.Title)
+		}
+		var input$ = $('<input type="checkbox" class="settingInput">').appendTo(label$)
+		label$.append($('<span>').text(fieldData.Label))
+
+		this.val = function() {
+			var cb = input$[0]
+			if (arguments.length) {
+				if (arguments[0] === true || arguments[0] == 'true') {
+					cb.checked = true;
+				} else {
+					cb.checked = false;
+				}
+			}
+			return cb.checked ? true : (_important ? false : undefined)
+		}
+		this.reset = function() {
+			input$[0].checked = false;
+		}
+	}
+	function SettingsButton(fieldData) {
+		this.Key = fieldData.Key
+		this.Container$ = $('<div class="settingInputContainer button">')
+		if (fieldData.Class) {
+			this.Container$.addClass(fieldData.Class)
+		}
+		var _self = this
+		var input$ = $('<div class="settingButton">').appendTo(this.Container$).text(fieldData.Label)
+		if (fieldData.Title) {
+			input$.attr('title', fieldData.Title)
+		}
+		if (typeof fieldData.Action == 'function') {
+			_self.Activate = function(onSuccess, onFail) {
+				fieldData.Action(_self.Fields, fieldData, onSuccess, onFail)
+			}
+			input$.click(function() {
+				_self.Activate()
+			})
+		}
+		this.val = function() {
+			return undefined
+		}
+		this.reset = function() { }
+	}
+	function SettingsFieldSelect(fieldData) {
+		this.Key = fieldData.Key
+		var _default = fieldData.Default
+		this.Container$ = $('<div class="settingInputContainer select">')
+		if (fieldData.Class) {
+			this.Container$.addClass(fieldData.Class)
+		}
+		var label$ = $('<span class="settingLabel">').appendTo(this.Container$).text(fieldData.Label)
+		if (fieldData.Title) {
+			label$.attr('title', fieldData.Title)
+		}
+		var input$ = $('<select class="settingInput">').appendTo(this.Container$)
+		for (let i = 0; i < fieldData.Options.length; i++) {
+			let optData = fieldData.Options[i]
+			let opt = $('<option>').appendTo(input$).attr('value', optData.Value).text(optData.Text)
+			if (optData.Selected) {
+				opt.attr('selected', '')
+			}
+		}
+
+		this.val = function() {
+			if (arguments.length) {
+				input$.val(arguments[0])
+			}
+			var vall = input$.val()
+			return (vall == _default) ? undefined : vall
+		}
+		this.reset = function() {
+			input$.val(_default)
+		}
+	}
+
+	function SettingsSpawner(fieldData) { //key, label, Title, spawnData) {
+		var _self = this
+		var _hidden = false
+		this.Key = fieldData.Key
+		var spawns = new List()
+		this.Container$ = $('<div class="settingInputContainer spawner">')
+		if (fieldData.Class) {
+			this.Container$.addClass(fieldData.Class)
+		}
+		var label$ = $('<div class="settingSpoilerTitle">').appendTo(this.Container$).text(fieldData.Label).click(function() {
+			_self.Toggle()
+		})
+		if (fieldData.Title) {
+			label$.attr('title', fieldData.Title)
+		}
+		var spawner$ = $('<div class="settingSpawnerPlus">').text('+').attr('title', 'Добавить').appendTo(this.Container$).click(function() {
+			_self.Spawn()
+		})
+		var content$ = $('<div class="settingSpoilerContent">').appendTo(this.Container$)
+		var incontentSpawner$ = $('<div class="settingSpawnerPlusIncontent">').text('+').attr('title', 'Добавить').appendTo(content$).click(function() {
+			_self.Spawn()
+		})
+
+		this.Toggle = function() {
+			_self[_hidden ? 'Show' : 'Hide']()
+		}
+		this.Hide = function() {
+			_hidden = true
+			label$.addClass('hidden')
+			content$.hide()
+		}
+		this.Show = function() {
+			_hidden = false
+			label$.removeClass('hidden')
+			content$.show()
+		}
+		this.Remove = function(spawn) {
+			spawn.Container$.remove()
+			spawns.remove(spawn)
+			spawn.Parent = null
+			if (spawns.Count < 1) {
+				incontentSpawner$.show()
+			}
+		}
+		this.Spawn = function() {
+			incontentSpawner$.hide()
+			var spawn = new SettingsSpawn(fieldData.SpawnData)
+			spawns.add(spawn)
+			spawn.Parent = _self
+			content$.append(spawn.Container$)
+			spawn.Container$[0]._settingField = spawn
+			return spawn
+		}
+		this.Duplicate = function(spawntc) {
+			var spawn = new SettingsSpawn(fieldData.SpawnData)
+			spawns.add(spawn)
+			spawn.Parent = _self
+			spawntc.Container$.after(spawn.Container$)
+			spawn.Container$[0]._settingField = spawn
+			spawn.val(spawntc.val())
+			return spawn
+		}
+		this.MoveDown = function(spawn) {
+			if (spawns.swapForward(spawn)) {
+				spawns.find(spawn).prev.value.Container$.after(spawn.Container$)
+			}
+		}
+		this.MoveUp = function(spawn) {
+			if (spawns.swapBackward(spawn)) {
+				spawns.find(spawn).next.value.Container$.before(spawn.Container$)
+			}
+		}
+
+		this.reset = function() {
+			spawns.forEach(function(node) {
+				_self.Remove(node.value)
+			})
+		}
+		this.val = function() {
+			var arr
+			if (arguments.length) {
+				arr = arguments[0]
+				spawns.forEach(function(node) {
+					_self.Remove(node.value)
+				})
+				if (arr instanceof Array && arr.length) {
+					for (let i = 0; i < arr.length; i++) {
+						let spawn = _self.Spawn()
+						spawn.val(arr[i])
+					}
+				}
+			}
+			else {
+				arr = []
+				spawns.forEach(function(node) {
+					var spawnval = node.value.val()
+					if (spawnval) {
+						arr.push(spawnval)
+					}
+				})
+				return arr.length ? arr : undefined
+			}
+		}
+		if (!fieldData.OpenByDefault) {
+			_self.Hide()
+		}
+	}
+
+	function SettingsSpoiler(spawnData) {
+		var _self = this
+		var _hidden = false
+		this.Key = spawnData.Key
+		var fields = []
+		this.Container$ = $('<div class="settingInputContainer spoiler">')
+		if (spawnData.Class) {
+			this.Container$.addClass(spawnData.Class)
+		}
+		var label$ = $('<div class="settingSpoilerTitle">').appendTo(this.Container$).text(spawnData.Label).click(function() {
+			_self.Toggle()
+		})
+		if (spawnData.Title) {
+			label$.attr('title', spawnData.Title)
+		}
+		var content$ = this.Content$ = $('<div class="settingSpoilerContent">').appendTo(this.Container$)
+
+		this.Toggle = function() {
+			_self[_hidden ? 'Show' : 'Hide']()
+		}
+		this.Hide = function() {
+			_hidden = true
+			label$.addClass('hidden')
+			content$.hide()
+		}
+		this.Show = function() {
+			_hidden = false
+			label$.removeClass('hidden')
+			content$.show()
+		}
+
+		if (spawnData.Fields) {
+			for (let i = 0; i < spawnData.Fields.length; i++) {
+				let fieldData = spawnData.Fields[i]
+				if (fieldData) {
+					let field;
+					switch (fieldData.Type) {
+						case "spawner":
+							field = new SettingsSpawner(fieldData)
+							break;
+						case "spoiler":
+							field = new SettingsSpoiler(fieldData)
+							break;
+						case 'check':
+							field = new SettingsFieldCheck(fieldData)
+							break;
+						case 'select':
+							field = new SettingsFieldSelect(fieldData)
+							break;
+						case 'list':
+							field = new SettingsFieldList(fieldData)
+							break;
+						case 'listoflists':
+							field = new SettingsFieldListoflists(fieldData)
+							break;
+						case 'button':
+							field = new SettingsButton(fieldData)
+							field.Fields = fields
+							break;
+						case 'field':
+						default:
+							field = new SettingsFieldInput(fieldData)
+							break;
+					}
+					field._Key = fieldData.Key
+					content$.append(field.Container$)
+					field.Container$[0]._settingField = field
+					fields.push(field)
+				}
+			}
+		}
+
+		this.reset = function() {
+			_self.val({})
+		}
+		this.val = function() {
+			var valobj = undefined
+			if (arguments.length) {
+				valobj = arguments[0]
+				if (valobj && typeof valobj == 'object') {
+					for (let i = 0; i < fields.length; i++) {
+						let field = fields[i]
+						if (valobj.hasOwnProperty(field._Key)) {
+							field.val(valobj[field._Key])
+						}
+						else {
+							field.reset()
+						}
+					}
+				}
+			}
+			else {
+				if (fields.length) {
+					for (let i = 0; i < fields.length; i++) {
+						let field = fields[i]
+						let vall = field.val()
+						if (vall !== undefined) {
+							if (!valobj) {
+								valobj = {}
+							}
+							valobj[field._Key] = vall
+						}
+					}
+				}
+				return valobj
+			}
+		}
+
+		if (!spawnData.OpenByDefault) {
+			_self.Hide()
+		}
+	}
+
+	function SettingsSpawn(spawnData) {
+		var _self = this
+		var fields = []
+		var _hidden = false
+		this.Container$ = $('<div class="settingInputContainer spawn">')
+		if (spawnData.Class) {
+			this.Container$.addClass(spawnData.Class)
+		}
+		var label$, content$;
+		
+		if (spawnData.IsSpoiler) {
+			label$ = $('<div class="settingSpoilerTitle">').appendTo(this.Container$).click(function() {
+				_self.Toggle()
+			})
+			content$ = this.Content$ = $('<div class="settingSpoilerContent">').appendTo(this.Container$)
+
+			this.Toggle = function() {
+				_self[_hidden ? 'Show' : 'Hide']()
+			}
+			this.Hide = function() {
+				_hidden = true
+				label$.addClass('hidden')
+				content$.hide()
+			}
+			this.Show = function() {
+				_hidden = false
+				label$.removeClass('hidden')
+				content$.show()
+			}
+
+			if (!spawnData.OpenByDefault) {
+				_self.Hide()
+			}
+		}
+		else {
+			label$ = $('<span class="settingLabel">').appendTo(this.Container$)
+			content$ = this.Container$
+		}
+
+		if (spawnData.Title) {
+			label$.attr('title', spawnData.Title)
+		}
+		if (typeof spawnData.Label != 'function') {
+			label$.text(spawnData.Label)
+		}
+		
+		var duplicate$ = $('<div class="settingSpawnerDuplicate">').text('⧉').attr('title', 'Дублировать').appendTo(this.Container$).click(function() {
+			_self.Parent.Duplicate(_self)
+		})
+		var moveUp$ = $('<div class="settingSpawnerUp">').text('🠹').attr('title', 'Опустить в списке').appendTo(this.Container$).click(function() {
+			_self.Parent.MoveUp(_self)
+		})
+		var moveDown$ = $('<div class="settingSpawnerDown">').text('🠻').attr('title', 'Поднять в списке').appendTo(this.Container$).click(function() {
+			_self.Parent.MoveDown(_self)
+		})
+		var remover$ = $('<div class="settingSpawnerMinus">').appendTo(this.Container$).text('-').attr('title', 'Удалить').click(function() {
+			let label = typeof spawnData.Label == 'function' ? spawnData.Label(fields) : spawnData.Label
+			if (confirm("\nВы нажали на кнопку удаления блока \"" + label + '".\n\nВы уверены, что хотите этого?\nВся введённая в его полях информация будет утеряна.\n')) {
+				_self.Parent.Remove(_self)
+			}
+		})
+
+		if (spawnData.Fields) {
+			for (let i = 0; i < spawnData.Fields.length; i++) {
+				let fieldData = spawnData.Fields[i]
+				if (fieldData) {
+					let field;
+					switch (fieldData.Type) {
+						case "spawner":
+							field = new SettingsSpawner(fieldData)
+							break;
+						case "spoiler":
+							field = new SettingsSpoiler(fieldData)
+							break;
+						case 'check':
+							field = new SettingsFieldCheck(fieldData)
+							break;
+						case 'select':
+							field = new SettingsFieldSelect(fieldData)
+							break;
+						case 'list':
+							field = new SettingsFieldList(fieldData)
+							break;
+						case 'listoflists':
+							field = new SettingsFieldListoflists(fieldData)
+							break;
+						case 'button':
+							field = new SettingsButton(fieldData)
+							field.Fields = fields
+							break;
+						case 'field':
+						default:
+							field = new SettingsFieldInput(fieldData)
+							break;
+					}
+					field._Key = fieldData.Key
+					content$.append(field.Container$)
+					field.Container$[0]._settingField = field
+					fields.push(field)
+				}
+			}
+		}
+
+		this.reset = function() {
+			_self.val({})
+		}
+		this.val = function() {
+			var valobj = undefined
+			if (arguments.length) {
+				valobj = arguments[0]
+				if (valobj && typeof valobj == 'object') {
+					for (let i = 0; i < fields.length; i++) {
+						let field = fields[i]
+						if (valobj.hasOwnProperty(field._Key)) {
+							field.val(valobj[field._Key])
+						}
+						else {
+							field.reset()
+						}
+					}
+				}
+				if (typeof spawnData.Label == 'function') {
+					label$.text(spawnData.Label(fields))
+				}
+			}
+			else {
+				if (fields.length) {
+					for (let i = 0; i < fields.length; i++) {
+						let field = fields[i]
+						let vall = field.val()
+						if (vall !== undefined) {
+							if (!valobj) {
+								valobj = {}
+							}
+							valobj[field._Key] = vall
+						}
+					}
+				}
+				return valobj
+			}
+		}
+	}
+
+	function getFileInfoObj(key, label, title, cls) {
+		return {
+			Type: key ? 'spoiler' : '_spawn_'
+			, Key: key || '_spawn_'
+			, Label: label || function(fields) {
+					let name = fields.find(f => f.Key == 'Path').val()
+					let order = fields.find(f => f.Key == 'OrderIndex').val()
+					return '[' + (order !== undefined ? order : '1') + '] ' + (name ? name : 'Новый файл')
+				}
+			, Title: title
+			//, Class: 'fileinfo'
+			, Class: (key ? 'fileinfo fileStatic ' : 'fileinfo fileSpawn ') + (cls || '')
+			, IsSpoiler: true
+			, Fields: [
+				{
+					Key: 'Path'
+					, Label: 'Имя/Путь к файлу: '
+					, Forbidden: ['\\\\', '//', '*', '?', '"', ':', '<', '>', '|']
+					, Width: '70%'
+				}, {
+					Key: 'Url'
+					, Label: 'Ссылка на файл: '
+					, Width: '90%'
+				}, {
+					Key: 'Description'
+					, Label: 'Описание файла: '
+					, Width: '90%'
+				}, {
+					Key: 'Tooltip'
+					, Label: 'Подсказка: '
+					, Width: '90%'
+				}, {
+					Key: 'UploadAlias'
+					, Label: 'Имя файла при загрузке (если указано, то должно быть уникальным): '
+					, Width: '400px'
+				}, {
+					Key: 'OrderIndex'
+					, ValType: 'int'
+					, Label: 'Порядок: '
+					, Title: 'Целое число. Чем оно больше, тем ниже эта группа будет располагаться в списке файлов. По умолчанию "1". Нельзя использовать "-99".'
+					, Width: '50px'
+				}, {
+					Type: 'select'
+					, Key: 'Importance'
+					, Label: 'Важность: '
+					, Default: 0
+					, Options: [
+						{ Value: 0, Text: 'обязательный файл, проверять хэш', Selected: true }
+						, { Value: 1, Text: 'обязательно наличие, но не проверять хэш' }
+						, { Value: 2, Text: 'опциональный файл' }
+					]
+				}, {
+					Type: 'button'
+					, Key: '__updateProps'
+					, Class: 'fileUpdateProps'
+					, Label: 'Обновить свойства файла'
+					, Width: '40%'
+					, Action: function(fields, fd, onSuccess, onFail) {
+						var filename = fields.find(f => f.Key == 'Url').val()
+						
+						cfgApiCall(
+							{
+								action: 'getFileStats'
+								, filename: filename
+							}
+							, function(data) {
+								fields.find(f => f.Key == 'Size').val(data.FileSize)
+								fields.find(f => f.Key == 'Hashes').val([data.Hash.toUpperCase()])
+								if (onSuccess) {
+									onSuccess(data.FileSize, data.Hash.toUpperCase())
+								}
+							}
+							, onFail
+						)
+					}
+				}, {
+					Key: 'Size'
+					, Label: 'Размер файла (байт): '
+					, Width: '40%'
+					, ValType: 'int'
+				}, {
+					Type: 'list'
+					, Key: 'Hashes'
+					, Label: 'Список валидных MD5-хэшей'
+					, Width: '60%'
+				}
+			]
+		};
+	}
+
+	function getGameVersionObj(isModGV) {
+		var fields = isModGV ? [
+				{
+					Key: 'ExeVersion'
+					, Label: 'Версия игры: '
+					, Width: '250px'
+				}, {
+					Key: 'Name'
+					, Label: 'Альт. название мода: '
+					, Width: '400px'
+				}, {
+					Key: 'Description'
+					, Label: 'Альт. описание мода: '
+					, Width: '90%'
+				}, {
+					Key: 'NeedsDonation'
+					, Label: 'Деньги мне плоти'
+					, Type: 'check'
+				}, {
+					Type: 'list'
+					, Key: 'Conflicts'
+					, Label: 'Конфликтующие моды для версии (по одному ID мода на строку)'
+					, Width: '550px'
+				}, {
+					Type: 'listoflists'
+					, Key: 'Dependencies'
+					, Label: 'Зависимости от модов для версии (по одной зависимости на строку, взаимозаменяемые ставятся на одной строке через палку | )'
+					, Width: '550px'
+				}, {
+					Type: 'spawner'
+					, Key: 'FileGroups'
+					, Class: 'groupedFilesForVersion'
+					, Label: 'Группы файлов для версии'
+					, SpawnData: getFileGroupObj()
+				}, {
+					Type: 'spawner'
+					, Key: 'Files'
+					, Class: 'singleFilesForVersion'
+					, Label: 'Отдельные файлы для версии'
+					, SpawnData: getFileInfoObj()
+				}
+			] : [
+				{
+					Key: 'ExeVersion'
+					, Label: 'Версия игры: '
+					, Width: '250px'
+				}, {
+					Type: 'spawner'
+					, Key: 'FileGroups'
+					, Label: 'Группы файлов для версии'
+					, SpawnData: getFileGroupObj()
+				}, {
+					Type: 'spawner'
+					, Key: 'Files'
+					, Label: 'Отдельные файлы для версии'
+					, SpawnData: getFileInfoObj()
+				}
+			];
+		return {
+			Label: 'Версия игры'
+			, Class: 'gameversion'
+			, Fields: fields
+		}
+	}
+
+	function getFileGroupObj() {
+		return {
+			Label: 'Группа файлов'
+			, Class: 'filegroup'
+			, Fields: [
+				{
+					Key: 'Name'
+					, Label: 'Имя группы: '
+					, Width: '70%'
+				}, {
+					Key: 'Collapsed'
+					, Type: 'check'
+					, Label: 'Свёрнута по умолчанию (WIP)'
+					, Title: 'При отображении экрана группа будет свёрнута'
+				}, {
+					Key: 'OrderIndex'
+					, ValType: 'int'
+					, Label: 'Порядок: '
+					, Title: 'Целое число. Чем оно больше, тем ниже эта группа будет располагаться в списке файлов. По умолчанию "1". Нельзя использовать "-99".'
+					, Width: '50px'
+				}, {
+					Type: 'spawner'
+					, Key: 'Files'
+					, Label: 'Файлы в группе'
+					, SpawnData: getFileInfoObj()
+				}
+			]
+		}
+	}
+
+	function getBgImageInfoObj(key, label) {
+		return {
+			Type: key ? 'spoiler' : '_spawn_'
+			, Key: key || '_spawn_'
+			, Label: label || 'Изображение'
+			, Fields: [
+				{
+					Key: 'Path'
+					, Label: 'Имя/Путь к файлу: '
+					, Width: '70%'
+				}, {
+					Key: 'Url'
+					, Label: 'Ссылка на файл: '
+					, Width: '90%'
+				}, {
+					Type: 'select'
+					, Key: 'Layout'
+					, Label: 'Расположение картинки:'
+					, Default: 'Stretch'
+					, Options: [
+						{ Value: 'None', Text: 'Выравнивание по левому верхнему углу' }
+						, { Value: 'Center', Text: 'Выравнивание по центру' }
+						, { Value: 'Stretch', Text: 'Растяжение изображения по размеру элемента', Selected: true }
+						, { Value: 'Zoom', Text: 'Пропорциональное масштабирование по размеру элемента' }
+						, { Value: 'Tile', Text: 'Мозаичное заполнение картинкой всей области' }
+					]
+				}, {
+					Type: 'list'
+					, Key: 'Hashes'
+					, Label: 'Список валидных MD5-хэшей'
+					, Width: '60%'
+				}
+			]
+		};
+	}
+
+	function getVectorObj(key, label) {
+		return {
+			Type: key ? 'spoiler' : '_spawn_'
+			, Key: key || '_spawn_'
+			, Label: label || 'Координаты'
+			, Fields: [
+				{
+					Key: 'X'
+					, ValType: 'int'
+					, Label: 'X / Ширина. Целое число'
+					, Width: '100px'
+				}, {
+					Key: 'Y'
+					, ValType: 'int'
+					, Label: 'Y / Высота. Целое число'
+					, Width: '100px'
+				}
+			]
+		};
+	}
+
+	function getUIElementObj(key, label) {
+		return {
+			Type: key ? 'spoiler' : '_spawn_'
+			, Key: key || '_spawn_'
+			, Label: label || 'Элемент'
+			, Fields: [
+				{
+					Key: 'Caption'
+					, Label: 'Текст'
+					, Width: '60%'
+				}
+				, getVectorObj('Position', 'Расположение')
+				, getVectorObj('Size', 'Размер')
+				, {
+					Key: 'CustomStyle'
+					, Type: 'check'
+					, Label: ' Свой стиль - без этой галки не будут работать цвет фона и цвет рамки'
+				}, {
+					Key: 'Color'
+					, Label: 'Цвет текста: шестнадцатиричное значение (#xxxxxx, рекомендуется) или название цвета на английском'
+					, Width: '200px'
+				}, {
+					Key: 'BgColor'
+					, Label: 'Цвет фона: шестнадцатиричное значение (#xxxxxx, рекомендуется) или название цвета на английском'
+					, Width: '200px'
+				}, {
+					Key: 'BgColorHover'
+					, Label: 'Цвет фона при наведении'
+					, Width: '200px'
+				}, {
+					Key: 'BgColorDown'
+					, Label: 'Цвет фона при нажатии'
+					, Width: '200px'
+				}, {
+					Key: 'BorderSize'
+					, ValType: 'int'
+					, Label: 'Толщина рамки'
+					, Title: 'Целое число. По умолчанию -1, что приводит к использованию значения по умолчанию, которое равняется 1 для кнопок закрытия/сворачивания окна, и 0 для прочих кнопок'
+					, Width: '50px'
+				}, {
+					Key: 'BorderColor'
+					, Label: 'Цвет рамки'
+					, Width: '200px'
+				}
+				, getBgImageInfoObj('BgImage', 'Фоновое изображение')
+				, getBgImageInfoObj('BgImageClick', 'Фоновое изображение при зажатой мыши')
+				, getBgImageInfoObj('BgImageHover', 'Фоновое изображение при наведённой мыши')
+				, {
+					Key: 'Font'
+					, Label: 'Название шрифта'
+					, Width: '200px'
+				}, {
+					Key: 'FontSize'
+					, Label: 'Размер шрифта в пикселях (целое значение)'
+					, Width: '50px'
+				}
+			]
+		};
+	}
+	function getLinkButtonObj(key, label) {
+		var obj = getUIElementObj(key, label)
+		obj.Fields.push({
+			Key: 'Url'
+			, Label: 'URL, открываемый в браузере по нажатию'
+			, Width: '90%'
+		})
+		return obj
+	}
+
+	settingsRootBlock = new SettingsSpoiler({
+		Label: "Настройки Баттлебраззерс"
+		, OpenByDefault: true
+		, Fields: [
+			{
+				Type: 'field'
+				, Key: 'GameName'
+				, Label: 'Название игры: '
+				, Width: '200px'
+			}, {
+				Type: 'field'
+				, Key: 'ExeName'
+				, Label: 'Имя exe-файла: '
+				, Width: '200px'
+			}, {
+				Type: 'field'
+				, Key: 'LoncherLinkName'
+				, Label: 'Имя ярлыка для лаунчера: '
+				, Width: '300px'
+			}, {
+				Type: 'field'
+				, Key: 'GogID'
+				, Label: 'GogID: '
+				, Width: '100px'
+			}, {
+				Type: 'field'
+				, Key: 'SteamID'
+				, Label: 'SteamID: '
+				, Width: '100px'
+			}, {
+				Type: 'field'
+				, Key: 'SteamGameFolder'
+				, Label: 'Название папки игры в Steam: '
+				, Width: '200px'
+			}, {
+				Type: 'spoiler'
+				, Key: 'LoncherVersions'
+				, Label: 'Версии лаунчеров'
+				, Fields: [
+					{
+						Type: 'spoiler'
+						, Key: 'Win7'
+						, Label: 'Windows 7'
+						, Fields: [
+							{
+								Type: 'field'
+								, Key: 'OSName'
+								, Label: 'Имя ОС: '
+								, Width: '500px'
+							}, {
+								Type: 'field'
+								, Key: 'LoncherExe'
+								, Label: 'Ссылка на исполняемый файл лаунчера: '
+								, Width: '500px'
+							}, {
+								Type: 'field'
+								, Key: 'LoncherHash'
+								, Label: 'MD5 лаунчера: '
+								, Width: '500px'
+							}, {
+								Type: 'button'
+								, Key: '__updateProps'
+								, Class: 'fileUpdateProps'
+								, Label: 'Обновить свойства файла'
+								, Width: '40%'
+								, Action: function(fields, fd, onSuccess, onFail) {
+									var filename = fields.find(f => f.Key == 'LoncherExe').val()
+									
+									cfgApiCall(
+										{
+											action: 'getFileStats'
+											, filename: filename
+										}
+										, function(data) {
+											fields.find(f => f.Key == 'LoncherHash').val([data.Hash.toUpperCase()])
+											if (onSuccess) {
+												onSuccess(data.FileSize, data.Hash.toUpperCase())
+											}
+										}
+										, onFail
+									)
+								}
+							}
+						]
+					}, {
+						Type: 'spoiler'
+						, Key: 'Win10'
+						, Label: 'Windows 10'
+						, Fields: [
+							{
+								Type: 'field'
+								, Key: 'OSName'
+								, Label: 'Имя ОС: '
+								, Width: '500px'
+							}, {
+								Type: 'field'
+								, Key: 'LoncherExe'
+								, Label: 'Ссылка на исполняемый файл лаунчера: '
+								, Width: '500px'
+							}, {
+								Type: 'field'
+								, Key: 'LoncherHash'
+								, Label: 'MD5 лаунчера: '
+								, Width: '500px'
+							}, {
+								Type: 'button'
+								, Key: '__updateProps'
+								, Class: 'fileUpdateProps'
+								, Label: 'Обновить свойства файла'
+								, Width: '40%'
+								, Action: function(fields, fd, onSuccess, onFail) {
+									var filename = fields.find(f => f.Key == 'LoncherExe').val()
+									
+									cfgApiCall(
+										{
+											action: 'getFileStats'
+											, filename: filename
+										}
+										, function(data) {
+											fields.find(f => f.Key == 'LoncherHash').val([data.Hash.toUpperCase()])
+											if (onSuccess) {
+												onSuccess(data.FileSize, data.Hash.toUpperCase())
+											}
+										}
+										, onFail
+									)
+								}
+							}
+						]
+					}
+				]
+			}, {
+				Type: 'field'
+				, Key: 'LoncherExe'
+				, Label: '[УСТАР] Ссылка на исполняемый файл лаунчера: '
+				, Width: '500px'
+			}, {
+				Type: 'field'
+				, Key: 'LoncherHash'
+				, Label: '[УСТАР] MD5 лаунчера: '
+				, Width: '500px'
+			}, {
+				Type: 'field'
+				, Key: 'Changelog'
+				, Label: 'Ссылка на файл ченжлога: '
+				, Width: '500px'
+			}, {
+				Type: 'field'
+				, Key: 'FAQFile'
+				, Label: 'Ссылка на файл FAQ: '
+				, Width: '500px'
+			}, {
+				Type: 'field'
+				, Key: 'ChangelogEscape'
+				, Label: 'Символ внешних ковычек ченжлога (устар.): '
+				, Title: 'Символ, в какие кавычки берётся Changelog при всосывании в ChangelogTemplate (т.е. которыми обрамлён [[[CHANGELOG]]] в самом ChangelogTemplate).'
+				, Width: '40px'
+			}, {
+				Type: 'field'
+				, Key: 'QuoteToEscape'
+				, Label: 'Символ внешних ковычек в файлах: '
+				, Title: 'Символ, в какие кавычки берётся Changelog при всовывании в ChangelogTemplate (т.е. которыми обрамлён [[[CHANGELOG]]] в самом ChangelogTemplate).'
+				, Width: '40px'
+			}, {
+				Type: 'select'
+				, Key: 'StartPage'
+				, Label: 'Открывать при старте: '
+				, Title: 'Эта настройка актуальна только для первого запуска лаунчера. Её изменение не отобразится у тех, кто уже пользуется лаунчером - там будет запомнено либо прошлое значение, либо значение из их собственных настроек.'
+				, Default: 'Status'
+				, Options: [
+					{ Value: 'Status', Text: 'Статус файлов', Selected: true }
+					, { Value: 'Changelog', Text: 'Ченжлог' }
+					, { Value: 'Links', Text: 'Ссылки' }
+				]
+			}, {
+				Type: 'spoiler'
+				, Key: 'UIStyle'
+				, Label: 'Шаблоны и стили экранов'
+				, Fields: [
+					getFileInfoObj('MainPage', 'Главная, мать её, страница')
+					, getFileInfoObj('Changelog', 'Шаблон ченжлога')
+					, getFileInfoObj('FAQ', 'Шаблон FAQ')
+					, getFileInfoObj('TemplateLib', 'Общий код для head шаблонов', 'Вставляется в тег head экранов статуса, FAQ, ченджлога и модов. В случае с faq и ченджлогом - если для них используется сырой html, а не url')
+				]
+			}, {
+				Type: 'spawner'
+				, Key: 'Assets'
+				, Label: 'Дополнительные ресурсы'
+				, Title: 'Файлы, которые будут скачаны, но не задействуются ядром лаунчера. Например, для страницы, открываемой в браузере в лаунчере.'
+				, SpawnData: getFileInfoObj()
+			}
+			, getBgImageInfoObj('Background', 'Фоновое изображение основного окна')
+			, {
+				Type: 'spawner'
+				, Key: 'RandomBackgrounds'
+				, Label: 'Случайные дополнительные фоны'
+				, SpawnData: {
+					Label: 'Случайный фон'
+					, Fields: [
+						{
+							Key: 'Chance'
+							, ValType: 'int'
+							, Label: 'Вероятность подстановки этого фона в промилле, целое число от 0 до 1000'
+							, Width: '100px'
+						}
+						, getBgImageInfoObj('Background', 'Фоновое изображение основного окна')
+					]
+				}
+			}
+			, getFileInfoObj('PreloaderBackground', 'Фоновое изображение сплэша')
+			, getFileInfoObj('Icon', 'Иконка')
+			, getFileInfoObj('Localization', 'Внешний файл локализации', undefined, 'localeFile')
+			, {
+				Type: 'spawner'
+				, Key: 'GameVersions'
+				, Label: 'Версии игры'
+				, Class: 'gameVersions'
+				, SpawnData: getGameVersionObj()
+			}
+			, {
+				Type: 'spawner'
+				, Key: 'ModGroups'
+				, Class: 'modSpawner'
+				, Label: 'Группы модов'
+				, SpawnData: {
+					DisplayField: 'Name'
+					, Label: function(fields) {
+						let name = fields.find(f => f.Key == 'Name').val()
+						let id = fields.find(f => f.Key == 'Id').val()
+						return '[' + (id ? id : 'XX') + '] ' + (name ? name : 'Безымянная группа')
+					}
+					, Class: 'modGroupSpawn'
+					, IsSpoiler: true
+					, Fields: [
+						{
+							Key: 'Name'
+							, Label: 'Название группы: '
+							, Width: '300px'
+						}, {
+							Key: 'Id'
+							, Label: 'Уникальный ID группы: '
+							, Width: '250px'
+						}
+					]
+				}
+			}
+			, {
+				Type: 'spawner'
+				, Key: 'Mods'
+				, Class: 'modSpawner'
+				, Label: 'Моды'
+				, SpawnData: {
+					DisplayField: 'Name'
+					, Label: function(fields) {
+						let name = fields.find(f => f.Key == 'Name').val()
+						let id = fields.find(f => f.Key == 'Id').val()
+						return '[' + (id ? id : 'XX') + '] ' + (name ? name : 'Неназванный мод')
+					}
+					, Class: 'modSpawn'
+					, IsSpoiler: true
+					, Fields: [
+						{
+							Key: 'Name'
+							, Label: 'Название мода: '
+							, Width: '300px'
+						}, {
+							Key: 'Id'
+							, Label: 'Уникальный ID мода: '
+							, Width: '250px'
+						}, {
+							Key: 'GroupId'
+							, Label: 'ID группы модов: '
+							, Width: '250px'
+						}, {
+							Key: 'IsHidden'
+							, Type: 'check'
+							, Label: 'Скрытый (разрабческий)'
+						}, {
+							Type: 'list'
+							, Key: 'Conflicts'
+							, Label: 'Конфликтующие моды (по одному ID мода на строку)'
+							, Width: '550px'
+						}, {
+							Type: 'listoflists'
+							, Key: 'Dependencies'
+							, Label: 'Зависимости от модов (по одной зависимости на строку, взаимозаменяемые ставятся на одной строке через палку | )'
+							, Width: '550px'
+						}, {
+							Key: 'Description'
+							, Label: 'Описание мода: '
+							, TextArea: true
+							, Width: '550px'
+							, Height: '60px'
+						}, {
+							Key: 'DetailedDescription'
+							, TextArea: true
+							, Label: 'Подробное описание мода, можно использовать bb-код: '
+							, Width: '550px'
+							, Height: '80px'
+						}, {
+							Type: 'list'
+							, Key: 'Screenshots'
+							, Label: 'Галерея (url-ы скриншотов)'
+							, Width: '550px'
+						}, {
+							Type: 'spawner'
+							, Key: 'GameVersions'
+							, Label: 'Версии игры для мода'
+							, SpawnData: getGameVersionObj(true)
+						}
+					]
+				}
+			}
+			, {
+				Type: 'spawner'
+				, Key: 'Buttons'
+				, Label: 'Кнопки-ссылки'
+				, SpawnData: getLinkButtonObj()
+			}
+			, {
+				Type: 'spoiler'
+				, Key: 'Survey'
+				, Label: 'Опрос, предлагаемый при запуске лаунчера'
+				, Fields: [
+					{
+						Key: 'ID'
+						, Label: 'ID опроса (любой, но для каждого опроса должен быть уникальный)'
+						, Width: '200px'
+					}
+					, {
+						Key: 'Url'
+						, Label: 'Ссылка на опрос'
+						, Width: '500px'
+					}
+					, {
+						Key: 'Text'
+						, Label: 'Текст'
+						, Width: '500px'
+					}
+				]
+			}
+			, {
+				Type: 'spoiler'
+				, Key: 'UI'
+				, Label: 'Дополнительная стилизация интерфейса'
+				, Fields: [
+					getUIElementObj('BasePanel', 'Базовая панель (подложка под всеми панелями)')
+					, getUIElementObj('StatusPanel', 'Панель статуса')
+					, getUIElementObj('ChangelogPanel', 'Панель новостей и истории изменений')
+					, getUIElementObj('LinksPanel', 'Панель ссылок')
+					, getUIElementObj('ModsPanel', 'Панель модов')
+					, getUIElementObj('UpdateLabel', 'Надпись со статусом обновления (которая над прогресс-баром)')
+					, getUIElementObj('LaunchButton', 'Кнопка запуска')
+					, getUIElementObj('SettingsButton', 'Кнопка "Настройки"')
+					, getUIElementObj('StatusButton', 'Кнопка "Статус файлов"')
+					, getUIElementObj('ChangelogButton', 'Кнопка "Новости/изменения"')
+					, getUIElementObj('LinksButton', 'Кнопка "Ссылки"')
+					, getUIElementObj('ModsButton', 'Кнопка "Моды"')
+					, getUIElementObj('FAQButton', 'Кнопка "FAQ"')
+					, getUIElementObj('CloseButton', 'Кнопка "Закрыть" (крестик)')
+					, getUIElementObj('MinimizeButton', 'Кнопка "Свернуть"')
+					, getUIElementObj('HelpButton', 'Кнопка "О программе"')
+				]
+			}
+		]
+	})
+
+	var thePage = _ge("settingsContainer")
+
+	thePage.appendChild(settingsRootBlock.Container$[0])
+	settingsRootBlock.Content$.addClass('base')
+
+	adminIdInput$ = $('#adminId')
+	changelog$ = $('#changelogText')
+	faq$ = $('#faqText')
+	donate$ = $('#donateText')
+
+	if (CookieObject.adminId) {
+		adminIdInput$.val(CookieObject.adminId)
+		adminIdSet = true
+		adminId = CookieObject.adminId
+	}
+
+	$.ajax({
+		url: "settings.json"
+		, dataType: "json"
+		, success: function(data) {
+			settingsRootBlock.val(data)
+
+			$.ajax({
+				url: "changelog.html"
+				, dataType: "text"
+				, success: function(data) {
+					changelog$.val(data)
+
+					$.ajax({
+						url: "faq.html"
+						, dataType: "text"
+						, success: function(data) {
+							faq$.val(data)
+
+							$.ajax({
+								url: "donate.html"
+								, dataType: "text"
+								, success: function(data) {
+									donate$.val(data)
+									$('#loadLocale').click()
+								}
+								, error: function(xr, errortext, exception) {
+									loadingBlocker$.hide()
+									alert(errortext + ":\r\n" + exception)
+								}
+							})
+						}
+						, error: function(xr, errortext, exception) {
+							loadingBlocker$.hide()
+							alert(errortext + ":\r\n" + exception)
+						}
+					})
+				}
+				, error: function(xr, errortext, exception) {
+					loadingBlocker$.hide()
+					alert(errortext + ":\r\n" + exception)
+				}
+			})
+		}
+		, error: function(xr, errortext, exception) {
+			loadingBlocker$.hide()
+			alert(errortext + ":\r\n" + exception)
+		}
+	})
+
+	$('#saveChangelog').click(function() {
+		cfgApiCall(
+			{
+				action: 'writeChangelog'
+				, changelog: $('#changelogText').val()
+			}
+			, 'Ченджлог успешно сохранён!'
+		)
+	})
+
+	$('#saveFAQ').click(function() {
+		cfgApiCall(
+			{
+				action: 'writeFAQ'
+				, faq: faq$.val()
+			}
+			, 'ФАК успешно сохранён!'
+		)
+	})
+
+	$('#saveDonate').click(function() {
+		cfgApiCall(
+			{
+				action: 'writeDonate'
+				, donatetext: donate$.val()
+			}
+			, 'Донатное предложение успешно сохранено!'
+		)
+	})
+
+	$('#saveSettings').click(function() {
+		cfgApiCall(
+			{
+				action: 'writeConfig'
+				, config: JSON.stringify(settingsRootBlock.val(), false, 4)
+			}
+			, 'Настройки успешно сохранены!'
+		)
+	})
+
+	$('#updateAllFiles').click(function() {
+		let dialog = $('#dialog')
+		dialog.empty()
+		dialog.append($('<div class="closeBtn">X</div>').click(function(e) {
+			dialog.hide()
+		}))
+		files = $('.fileinfo')
+		for (let file of files) {
+			(function (fileEl) {
+				let fval = fileEl._settingField.val()
+				dialog.append(
+					$('<div class="fileRecord">').append(
+						$('<div class="name">').text(fval.Path)
+						, $('<div class="hash">').text('MD5: ' + (fval.Hashes ? fval.Hashes.join(', ') : 'NONE'))
+						, $('<div class="size">').text('Размер: ' + (fval.Size ? fval.Size : 'NONE'))
+						, $('<div class="update settingButton">').text('Обновить').click(function(e) {
+							let btn = $(fileEl).find('.fileUpdateProps')
+							if (btn.length) {
+								let parent = $(this).parent()
+								parent.addClass('outdated')
+								btn[0]._settingField.Activate(function(size, hash) {
+									parent.removeClass('outdated')
+									parent.find('.hash').text('MD5: ' + (hash || 'NONE'))
+									parent.find('.size').text('Размер: ' + size)
+								}, function() {
+									parent.removeClass('outdated')
+								})
+							}
+						})
+					)
+				)
+			})(file)
+		}
+		dialog.show()
+	})
+
+	$('#loadChangelog').click(function() {
+		$.ajax({
+			url: "changelog.html"
+			, dataType: "text"
+			, success: function(data) {
+				changelog$.val(data)
+			}
+			, error: function(xr, errortext, exception) {
+				alert(errortext + ":\r\n" + exception)
+			}
+		})
+	})
+	$('#loadFAQ').click(function() {
+		$.ajax({
+			url: "faq.html"
+			, dataType: "text"
+			, success: function(data) {
+				faq$.val(data)
+			}
+			, error: function(xr, errortext, exception) {
+				alert(errortext + ":\r\n" + exception)
+			}
+		})
+	})
+	$('#loadDonate').click(function() {
+		$.ajax({
+			url: "donate.html"
+			, dataType: "text"
+			, success: function(data) {
+				donate$.val(data)
+			}
+			, error: function(xr, errortext, exception) {
+				alert(errortext + ":\r\n" + exception)
+			}
+		})
+	})
+	$('#loadSettings').click(function() {
+		$.ajax({
+			url: "settings.json"
+			, dataType: "json"
+			, success: function(data) {
+				settingsRootBlock.val(data)
+			}
+			, error: function(xr, errortext, exception) {
+				alert(errortext + ":\r\n" + exception)
+			}
+		})
+	})
+
+	let locale_ = []
+	let localeMap_ = []
+	let locSelect$ = $('#locLinesSelect')
+	let locOrig$ = $('#locOriginal')
+	let locOverride$ = $('#locOverride')
+
+	$('#loadLocale').click(function() {
+		$.ajax({
+			url: "loc.txt"
+			, dataType: "text"
+			, success: function(data) {
+				let loc_n = data.split('\n')
+				$.ajax({
+					url: "assets/locale_default.txt"
+					, dataType: "text"
+					, success: function(data) {
+						loadingBlocker$.hide()
+						
+						let loc_d = data.split('\n')
+						locale_ = []
+						for (let s of loc_d) {
+							let eqidx = s.indexOf('=')
+							if (eqidx > 0) {
+								let kv = {
+									key: s.substring(0, eqidx).trim()
+									, orig: s.substring(eqidx + 1).trim()
+								}
+								locale_.push(kv)
+								localeMap_[kv.key] = kv
+							}
+						}
+						for (let s of loc_n) {
+							let eqidx = s.indexOf('=')
+							if (eqidx > 0) {
+								let key = s.substring(0, eqidx).trim()
+								if (localeMap_[key]) {
+									localeMap_[key].override = s.substring(eqidx + 1).trim()
+								}
+							}
+						}
+						locSelect$.append(locale_.map(x => $('<option>').text(x.key).attr('value', x.key)))
+					}
+					, error: function(xr, errortext, exception) {
+						loadingBlocker$.hide()
+						alert(errortext + ":\r\n" + exception)
+					}
+				})
+			}
+			, error: function(xr, errortext, exception) {
+				loadingBlocker$.hide()
+				alert(errortext + ":\r\n" + exception)
+			}
+		})
+	})
+
+	locSelect$.on('change', function() {
+		let kv = localeMap_[this.value]
+		locOrig$.val(kv.orig)
+		locOverride$.val(kv.override || '')
+	})
+
+	$('#applyLine').click(function() {
+		localeMap_[locSelect$.val()].override = locOverride$.val()
+	})
+	
+	$('#saveLocale').click(function() {
+		var locStr = locale_.filter(x => !!x.override).map(x => x.key + ' = ' + x.override).join('\r\n')
+		cfgApiCall(
+			{
+				action: 'writeLocale'
+				, localeText: locStr
+			}
+			, function() {
+				alert("\r\n\r\nПеревод лаунчера успешно сохранён!\r\n\r\n")
+				$('.settingInputContainer.localeFile .fileUpdateProps .settingButton').click()
+			}
+		)
+	})
+
+	$('.sideBtn').click(function() {
+		let dialid = $(this).attr('dialogclass')
+		if (dialid) {
+			$('#' + dialid).toggle()
+			$('.sidePanelDialog:not(#' + dialid + ')').hide()
+		}
+	})
+	$('.sidePanelDialog .closeBtn').click(function() {
+		$(this).parent().hide()
+	})
+	$('.sidePanelDialog').hide()
+
+	/*$('#loadBkpChangelog').click(function() {
+		$.ajax({
+			url: "test/changelog_.html"
+			, dataType: "text"
+			, success: function(data) {
+				changelog$.val(data)
+			}
+			, error: function(xr, errortext, exception) {
+				alert(errortext + ":\r\n" + exception)
+			}
+		})
+	})
+	$('#loadBkpFAQ').click(function() {
+		$.ajax({
+			url: "test/faq_.html"
+			, dataType: "text"
+			, success: function(data) {
+				faq$.val(data)
+			}
+			, error: function(xr, errortext, exception) {
+				alert(errortext + ":\r\n" + exception)
+			}
+		})
+	})
+	$('#loadBkpSettings').click(function() {
+		$.ajax({
+			url: "test/settings_.json"
+			, dataType: "json"
+			, success: function(data) {
+				settingsRootBlock.val(data)
+			}
+			, error: function(xr, errortext, exception) {
+				alert(errortext + ":\r\n" + exception)
+			}
+		})
+	})*/
+})();
+
+});
+</script>
+
+<style>
+textarea, input {
+	font-family: Consolas, monospace;
+}
+
+input[type="checkbox"].settingInput {
+	margin: 1px 6px 1px 2px;
+	scale: 1.05;
+}
+
+#loadingBlocker {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100vh;
+	z-index: 99999;
+	cursor: wait;
+	background-color: #a0a2a92b;
+}
+
+#pineQuotes
+, #dlTranslationJson
+, #dlTranslationJs
+, #dlTranslationJsEn
+, #applyDictionaryToUntranslated
+, .defBtn {
+	display: block;
+	width: 40%;
+	padding: 10px;
+	text-align: center;
+	margin: 10px;
+	cursor: pointer;
+	border: 1px solid #707070;
+	border-radius: 4px;
+}
+#pineQuotes:hover
+, #dlTranslationJson:hover
+, #dlTranslationJs:hover
+, #dlTranslationJsEn:hover
+, #applyDictionaryToUntranslated:hover
+, .defBtn:hover
+, .mainSettings .defBtn:hover {
+	background: #d0e0ff;
+}
+.buttonRow {
+	position: relative;
+	display: flex;
+	place-content: space-between;
+    align-items: center;
+    flex-direction: row;
+}
+.mainSettings.buttonRow {
+	position: fixed;
+	display: flex;
+	left: 0px;
+	bottom: 0px;
+    align-items: center;
+    flex-direction: column;
+	border: 2px solid #999;
+	border-width: 2px 2px 0 0;
+	border-top-right-radius: 5px;
+	background-color: #e0e0e0;
+	min-width: 120px;
+	width: calc(50vw - 420px);
+	padding: 18px 18px 20px 20px;
+	gap: 20px;
+}
+.mainSettings .defBtn {
+	margin: 0;
+	background: #fff;
+	width: 100%;
+}
+.inpText {
+	width: 100%;
+	font-family: consolas;
+	font-size: 13.3px;
+}
+.settingButton
+, .closeBtn
+{
+	display: inline-flex;
+	border: 1px solid #c0c0c0;
+	border-radius: 4px;
+	cursor: pointer;
+	padding: 3px 7px 3px 6px;
+	background-image: linear-gradient(0deg, #c0c0c040, transparent 60%);
+	place-content: center;
+	align-items: center;
+}
+
+.settingInputContainer .modSpawner {
+	background-color: #d5d8d9;
+}
+
+.settingInputContainer .singleFilesForVersion {
+	background-color: #dfd8cb;
+}
+.settingInputContainer .groupedFilesForVersion {
+	background-color: #c8d9db;
+}
+
+/*.settingInputContainer .modSpawn
+, .settingInputContainer .modSpawn > .settingSpoilerContent
+, .settingInputContainer .modSpawn > .settingSpoilerContent > .settingInputContainer:not(.spawner) {
+	background-color: #e9f5fA;
+}*/
+
+/*#loadChangelog
+, #loadSettings
+, #loadFAQ
+, #loadBkpSettings
+, #loadBkpChangelog {
+	position: absolute;
+	right: 180px;
+	width: 170px;
+	padding: 2px 10px;
+    top: 0;
+    
+    margin: 0 10px;
+	right: 0;
+}
+#loadBkpSettings
+, #loadBkpChangelog {
+    right: 0;
+}*/
+.article-content {
+	padding: 12px 24px 0 30px;
+}
+.kbHeader a {
+	vertical-align: bottom;
+}
+input[type="text"] {
+	display: block;
+	margin-top: 2px;
+}
+.settingLabel {
+	display: block;
+	padding-bottom: 4px;
+	min-height: 21px;
+	width: calc(100% - 100px);
+}
+.settingInputContainer.check .settingLabel {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+#settingsContainer {
+	font-size: 13px;
+}
+#settingsContainer input[type=text],
+#settingsContainer textarea,
+#settingsContainer select {
+	font-size: 12px;
+}
+.settingInputContainer {
+	background: #fff;
+	position: relative;
+	padding: 6px 5px;
+}
+.settingInputContainer.spawner
+, .settingInputContainer.spawn
+, .settingInputContainer.spoiler
+{
+	border: 1px #d0d1d1 solid;
+	border-radius: 4px;
+	margin: 5px 0px;
+}
+.settingSpoilerTitle {
+	background: url('spoiler_up.png') #f0f0f0 no-repeat;
+	background-position: 5px center;
+	padding-left: 30px;
+	background-size: 17px;
+	cursor: pointer;
+	width: calc(100% - 33px);
+	border-radius: 2px;
+	min-height: 21px;
+	display: flex;
+	align-items: center;
+}
+.settingSpoilerTitle.hidden {
+	background-image: url('spoiler_down.png') !important;
+}
+.spawn > .settingSpoilerTitle {
+	width: calc(100% - 132px);
+}
+.settingSpawnerMinus
+, .settingSpawnerPlus
+, .settingSpawnerUp
+, .settingSpawnerDown
+, .settingSpawnerDuplicate
+{
+	display: flex;
+	position: absolute;
+	width: 28px;
+	height: 21px;
+	top: 6px;
+	right: 5px;
+	border: 1px solid #c0c0c0;
+	border-radius: 4px;
+	background-color: #fff;
+	cursor: pointer;
+	font-size: 20px;
+	font-family: Consolas, monospace;
+	place-content: center;
+	align-items: center;
+}
+.settingSpawnerUp {
+	right: 38px;
+}
+.settingSpawnerDown {
+	right: 71px;
+	padding-bottom: 3.5px;
+}
+.settingSpawnerDuplicate {
+	right: 104px;
+	font-size: 14px;
+	padding-top: 2px;
+}
+.settingSpawnerPlusIncontent {
+	display: flex;
+    width: 64px;
+    height: 56px;
+    border: 1px solid #c0c0c0;
+	background-color: #fff;
+    margin-top: 6px;
+    padding-bottom: 3px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 35px;
+    font-family: Consolas, monospace;
+    place-content: center;
+    align-items: center;
+}
+.settingSpawnerPlusIncontent:hover
+, .settingSpawnerMinus:hover
+, .settingSpawnerPlus:hover
+, .settingSpawnerUp:hover
+, .settingSpawnerDown:hover
+, .settingSpawnerDuplicate:hover
+, .settingButton:hover
+, .closeBtn:hover
+{
+	border: 1px solid #a0a0a0;
+	background-color: #d0d0d0;
+}
+
+/*.settingSpoilerContent:not(.base) {
+    position: fixed;
+    top: 10vh;
+    left: 200px;
+    box-shadow: #222 0px 2px 100px;
+    width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: visible;
+    margin: 0;
+    padding: 5px 10px;
+    border-radius: 10px;
+    background-color: #fff;
+}*/
+
+.sideBtnPanel {
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	z-index: 2;
+	display: flex;
+	transform: rotate(90deg);
+	transform-origin: 0 100%;
+}
+
+.sideBtn {
+	padding: 5px 6px 7px;
+	margin: 5px 8px 0 0;
+	border: 2px solid #999;
+	border-bottom: 0;
+	border-radius: 5px 5px 0 0;
+	font-size: 1.35em;
+	color: #606060;
+	background-color: #e0e0e0;
+	cursor: pointer;
+}
+.sideBtn:hover {
+	background-color: #fff;
+	margin-top: 0;
+}
+.sidePanelDialog {
+	z-index: 1;
+	position: fixed;
+	top: 32px;
+	left: 0px;
+	width: min(80%, 1000px);
+	overflow-y: auto;
+	padding: 6px 10px 6px 80px;
+	border: 2px solid #999;
+	border-left: 0;
+	border-radius: 0 7px 7px 0;
+	font-size: 1.07em;
+	color: #101010;
+	display: none;
+	background-color: #f0f0f0;
+}
+#BBcodeHelp {
+	width: min(70%, 600px);
+	max-height: calc(100% - 72px);
+}
+.sidePanelDialog:not(#BBcodeHelp) {
+	height: calc(100% - 72px);
+	display: flex;
+	flex-direction: column;
+}
+.sidePanelDialog textarea {
+	resize: none;
+	margin-bottom: 8px;
+}
+.sidePanelDialog textarea:not(.noresize) {
+	flex-grow: 1;
+	flex-shrink: 1;
+}
+#BBcodeHelp p {
+	
+}
+#dialog {
+	position: fixed;
+	top: 10%;
+	left: 10%;
+	width: 80%;
+	height: 80%;
+	overflow-y: auto;
+	padding: 6px 10px 6px 30px;
+	border: 2px solid #999;
+	border-radius: 5px;
+	font-size: 1.07em;
+	color: #101010;
+	display: none;
+	background-color: #f0f0f0;
+	box-shadow: 0 10px 100px #333;
+}
+
+#dialog .closeBtn {
+	position: fixed;
+	z-index: 1;
+	right: calc(10% - 40px);
+	top: 10.5%;
+	border-radius: 0 10px 10px 0;
+	width: 40px;
+	height: 40px;
+	background-color: #900;
+	color: #fff;
+	text-shadow: 1px 1px 1px #000;
+}
+
+.sidePanelDialog .closeBtn {
+	position: absolute;
+	right: 6px;
+	top: 6px;
+	width: 30px;
+	height: 30px;
+	background-color: #900;
+	color: #fff;
+	text-shadow: 1px 1px 1px #000;
+}
+
+h3 {
+	margin: 10px 2px 14px;
+}
+
+.fileRecord {
+	display: flex;
+	position: relative;
+	border: 1px solid #ccc;
+	margin-bottom: 10px;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.fileRecord .update {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+.fileRecord.outdated {
+	opacity: 0.25;
+}
+
+.locFieldContainer {
+	display: flex;
+	flex-grow: 1;
+	gap: 12px;
+	margin-bottom: 20px;
+}
+#locLinesSelect {
+	width: 200px;
+}
+.locFieldTAContainer {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: 4px;
+}
+#applyLine {
+	margin: 0;
+	width: 200px;
+}
+
+#locOriginal
+, #locOverride
+{
+	font-size: 1.05em;
+}
+</style>
+</head>
+<body>
+
+<iframe id="my_iframe" style="display:none;" download="ru_ru.json"></iframe>
+
+<div class='page-content'>
+
+<div class="kbHeader"><a href='#'>Конфигуратор лончера<br>Battle Brothers</a><span></span></div>
+
+<div class='page-content-grid'>
+
+
+<div class='article-content'>
+Ваш ID админа: <input id='adminId' style="width:80%; margin: 10px;" autocomplete=off></input><br>
+
+<div id='ChangelogDialog' class='sidePanelDialog'>
+	<div class="closeBtn">X</div>
+	<h3>Changelog:</h3>
+	<textarea id="changelogText" class="inpText" rows="26" autocomplete=off></textarea>
+	<div class='buttonRow'>
+	<div id='saveChangelog' class='defBtn'>Сохранить ченжлог</div><div id='loadChangelog' class='defBtn'>Восстановить ченжлог из файла</div><!--<div id='loadBkpChangelog'>Загрузить из прошлой версии</div>-->
+	</div>
+</div>
+<div id='FAQDialog' class='sidePanelDialog'>
+	<div class="closeBtn">X</div>
+	<h3>FAQ:</h3>
+	<textarea id="faqText" class="inpText" rows="26" autocomplete=off></textarea>
+	<div class='buttonRow'>
+	<div id='saveFAQ' class='defBtn'>Сохранить FAQ</div><div id='loadFAQ' class='defBtn'>Восстановить FAQ из файла</div><!--<div id='loadBkpChangelog'>Загрузить из прошлой версии</div>-->
+	</div>
+</div>
+<div id='DonateDialog' class='sidePanelDialog'>
+	<div class="closeBtn">X</div>
+	<h3>Страница пончиков:</h3>
+	<textarea id="donateText" class="inpText" rows="6" autocomplete=off></textarea>
+	<div class='buttonRow'>
+	<div id='saveDonate' class='defBtn'>Сохранить текст прошения</div><div id='loadDonate' class='defBtn'>Восстановить текст прошения из файла</div><!--<div id='loadBkpChangelog'>Загрузить из прошлой версии</div>-->
+	</div>
+</div>
+<div id='BBcodeHelp' class='sidePanelDialog'>
+	<div class="closeBtn">X</div>
+	<p><b>[B][/B]</b> - <b>жирный</b>
+	</p><p><b>[I][/I]</b> - <i>курсивный</i>
+	</p><p><b>[S][/S]</b> - <s>зачёркнутый</s>
+	</p><p><b>[U][/U]</b> - <u>подчёркнутый</u>
+	</p><p><b>[N]</b> - перенос строки. Можно также использовать &lt;br&gt; или '\n', но не "\n"
+	</p><p><b>[UL][/UL]</b> - объявление списка
+	</p><p><b>[LI][/LI]</b> - элемент списка
+	</p><p><b>[URL=ссылка][/URL]</b> - ссылка. Должна быть без кавычек, и если ссылка на внешний ресурс, то обязательно начинаться с http/https. Если текста внутри нет, его и не будет. У нас не такие умные ббкоды, как на форумах.
+	</p><p><b>[COLOR=#ЦВЕТ][/COLOR]</b> - меняет цвет текста. При переносе строк цвет следует устанавливать по отдельности на каждой строке.
+	</p><p><b>[HL=#ЦВЕТ][/HL]</b> - "хайлайтер", выделяет часть строки фоновым цветом.  При переносе строк следует выделять по отдельности на каждой строке.
+	</p>
+</div>
+<div id='LocaleDialog' class='sidePanelDialog'>
+	<div class="closeBtn">X</div>
+	<h3>Текст кнопок лаунчера</h3>
+	<div class='locFieldContainer'>
+		<select multiple id='locLinesSelect'></select>
+		<div class='locFieldTAContainer'>
+			<textarea id="locOriginal" class="inpText" readonly autocomplete=off></textarea>
+			<textarea id="locOverride" class="inpText" autocomplete=off></textarea>
+			<div id='applyLine' class='defBtn'>Применить</div>
+		</div>
+	</div>
+	
+	<div class='buttonRow'>
+		<div id='saveLocale' class='defBtn'>Сохранить локаль</div>
+		<div id='loadLocale' class='defBtn'>Восстановить локаль из файла</div>
+	</div>
+</div>
+<div id='settingsContainer'></div>
+<div class='buttonRow mainSettings'>
+<div id='saveSettings' class='defBtn'>Сохранить настройки</div>
+<div id='loadSettings' class='defBtn'>Восстановить настройки из файла</div>
+<div id='updateAllFiles' class='defBtn'>Обновить данные всех файлов</div>
+<!--<div id='loadBkpSettings'>Загрузить из прошлой версии</div>-->
+</div>
+
+</div>
+
+</div>
+</div>
+
+<div class='sideBtnPanel'>
+<div id='BBcodeHelpBtn' class='sideBtn' dialogclass='BBcodeHelp'>[BB]</div>
+<div id='ShowChangelogBtn' class='sideBtn' dialogclass='ChangelogDialog'>Лог</div>
+<div id='ShowFaqBtn' class='sideBtn' dialogclass='FAQDialog'>FAQ</div>
+<div id='ShowDonateBtn' class='sideBtn' dialogclass='DonateDialog'>Донат</div>
+<div id='ShowLocaleBtn' class='sideBtn' dialogclass='LocaleDialog'>Локаль</div>
+</div>
+
+<div id='dialog'></div>
+<div id='loadingBlocker'></div>
+</body>
+</html>
