@@ -165,8 +165,8 @@ var YL = new (function () {
 		window.external.LaunchGame()
 	}
 
-	this.ModInstall = function (id) {
-		window.external.ModInstall(id)
+	this.ModInstall = function (id, verId) {
+		window.external.ModInstall(id, verId)
 	}
 	this.ModUninstall = function (id) {
 		window.external.ModUninstall(id)
@@ -190,6 +190,9 @@ var YL = new (function () {
 	}
 	this.CheckModUpdates = function () {
 		window.external.CheckModUpdates()
+	}
+	this.CheckModUpdate = function (modId) {
+		window.external.CheckModUpdate(modId)
 	}
 
 	this.Options = {

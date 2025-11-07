@@ -104,10 +104,22 @@ namespace YobaLoncher {
 			, { "ModsBtn", "Mods" }
 			, { "ModsTooltip", "Mods" }
 			, { "NoModsForThisVersion", "There are no mods for your version of the game." }
-			, { "YouHaveOutdatedMods", "New versions of these mods are available: {0}\r\n\r\nWould you like to update them?\r\n({1} are to be downloaded)" }
+			, { "YouHaveOutdatedMod", "New versions of this mod is available: {0}\r\nNew version: {1}\r\n\r\nWould you like to update this mod?\r\n({2} are to be downloaded)" }
+			/*, { "YouHaveOutdatedMods", "New versions of these mods are available: {0}\r\n\r\nWould you like to update them?\r\n({2} are to be downloaded)" }
 			, { "YouHaveOutdatedModsAndMissingFiles", "You have outdated and missing files for those mods: {0}\r\n\r\nWould you like to update them right now?\r\n({1} are to be downloaded)" }
-			, { "YouHaveOutdatedModsAndMissingFilesOffline", "You have outdated and/or missing files for those mods: {0}\r\n\r\nWe cannot update them in offline mode, but be cautious using them." }
+			*/, { "YouHaveOutdatedModsAndMissingFilesOffline", "You have outdated and/or missing files for those mods: {0}\r\n\r\nWe cannot update them in offline mode.\r\n\r\nAre you sure you want to launch the game anyway?" }
 			, { "YouHaveAlteredMods", "The file structure of these mods has changed: {0}\r\n\r\nIt is highly recommended to update them. Shall we update them immediately?\r\n({1} are to be downloaded)" }
+
+			, { "YouHaveBrokenModsOffline", "You have missing files for these mods: {0}\r\n\r\nWe cannot update them in offline mode.\r\nShall we disable them?" }
+			, { "YouHaveBrokenMods", "These mods have outdated files: {0}\r\n({1} total to download)\r\n\r\nWould you like to update them?" }
+			, { "YouHaveOutdatedMods", "New versions of these mods are available: {2}\r\n({3} total to download)\r\n\r\nWould you like to update them?" }
+			, { "YouHaveOutdatedAndBrokenMods", "These mods have outdated files: {0}\r\n({1} total to download)\r\n\r\nAlso, new versions of these mods are available: {2}\r\n({3} total to download)\r\n\r\nWould you like to update them?" }
+			, { "YouHaveBrokenModsAndMissingFiles", "These mods have outdated and/or missing files: {0}\r\n({1} total to download)\r\n\r\nWould you like to update and fix them?" }
+			, { "YouHaveOutdatedModsAndMissingFiles", "These mods have missing files: {0}\r\n({1} total to download)\r\n\r\nNew versions of these mods are available: {2}\r\n({3} total to download)\r\n\r\nWould you like to fix and update them?" }
+			, { "YouHaveOutdatedAndBrokenModsAndMissingFiles", "These mods have outdated and/or missing files: {0}\r\n({1} total to download)\r\n\r\nAlso, new versions of these mods are available: {2}\r\n({3} total to download)\r\n\r\nWould you like to update them?" }
+			, { "ModsUpdateAll", "Update all" }
+			, { "ModsFixesOnly", "Only fix what's broken" }
+			, { "ModsSkipAll", "Skip all" }
 			, { "ModInstallationInProgress", "Installing..." }
 			, { "ModInstallationDone", "Mods installed successfully" }
 			, { "ModInstallationError", "Mod installation error" }

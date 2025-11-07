@@ -11,6 +11,17 @@ var mainLocale, modsLocale, statusLocale, settingsLocale;
 
 var _START_VIEW_ID = "Status"
 
+function make$(tag) {
+	var items = tag.split(' ')
+	var el = document.createElement(items[0])
+	for (var i = 1; i < items.length; i++) {
+		if (items[i].length) {
+			el.classList.add(items[i])
+		}
+	}
+	return $(el)
+}
+
 $.fn.onActivate = function(fn) {
 	return this.click(fn).keyup(function(e) {
 		if (e.key == "Enter" || e.key == "Spacebar" || e.key == " ") {
@@ -45,7 +56,8 @@ var Dialog = {
 	_IsInit: false
 	, Init: function() {
 		var _self = this
-		var touchScrollInit = false
+		var touchScrollController = false
+		var isShown = false
 		var dialog = $('<div class="bb-dialog">').appendTo(document.body)
 		var form = $('<div class="bb-dialog-form">').appendTo(dialog)
 		var contentWrapper = $('<div class="bb-dialog-contentWrapper">')
@@ -61,20 +73,21 @@ var Dialog = {
 			_self.Title$.text(title)
 		}
 		_self.Show = function(isSmall) {
+			isShown = true
 			dialog.show()
 			form.addClass('small')
-			if (!touchScrollInit) {
-				addTouchScroll({
+			if (!touchScrollController) {
+				touchScrollController = addTouchScroll({
 					Element: _self.Content$[0]
 					, DrawArrows: true
 					, DrawScrollBar: true
 					, InbarArrows: true
 					, Mutable: true
 				})
-				touchScrollInit = true
 			}
 		}
 		_self.Hide = function() {
+			isShown = false
 			dialog.hide()
 			form.removeClass('small')
 			_self.Content$.empty()
@@ -82,6 +95,15 @@ var Dialog = {
 		}
 		dialog.hide()
 		_self._IsInit = true
+
+		Object.defineProperty(_self, 'IsShown', {
+			get: function() { return isShown }
+		});
+		_self.updateTouchScroll = function() {
+			if (isShown && touchScrollController) {
+				touchScrollController.TouchScrollCheck()
+			}
+		}
 	}
 }
 
@@ -248,13 +270,6 @@ var launchBtn = {
 	, _IsInit: false
 	, IsEnabled: false
 	, IsReady: true
-}
-
-function createModBtn(modControls, key) {
-	$("<div class='modControlButton " + key.toLowerCase() + "'>").attr('tabindex', modTabIdx++).text(modsLocale[key + "Mod"]).appendTo(modControls).onActivate(function() {
-		var id = $(this).parents('.modEntry')[0].modId
-		YL['Mod' + key](id)
-	})
 }
 
 function onFileActionComboboxSelect() {
@@ -453,6 +468,8 @@ function isValidURL(str) {
 }
 
 $(function() {
+	body$ = $(document.body)
+
 	if (!document.body.classList) {
 		IE9 = true
 		Object.defineProperty(HTMLElement.prototype, "classList", {
@@ -500,6 +517,15 @@ $(function() {
 		})
 	}
 
+	function updateBodySizeClasses() {
+		if (window.outerWidth > 1079) {
+			body$.addClass('wide')
+		}
+		else {
+			body$.removeClass('wide')
+		}
+	}
+
 	var scrollableElements = []
 	var resizeTimeout = null
 	window.addEventListener("resize", function() {
@@ -513,6 +539,8 @@ $(function() {
 		resizeTimeout = null
 		var screl;
 		progressBar.UpdateValSeg()
+		updateBodySizeClasses()
+
 		for (var i = 0; i < scrollableElements.length; i++) {
 			screl = scrollableElements[i]
 			if ($(screl).is(':visible')) {
@@ -522,6 +550,7 @@ $(function() {
 				screl.__markedToCheck = true
 			}
 		}
+		Dialog.updateTouchScroll()
 	}
 
 	_clickBreaker$ = spawn(document.body, 'div', 'touchScrollClickBreaker')
@@ -539,7 +568,7 @@ $(function() {
 		_START_VIEW_ID = startViewId
 	}
 
-	$(document.body).keyup(function(e) {
+	body$.keyup(function(e) {
 		if (e.key == 'Alt') {
 			var target = $(e.target)
 			if (target.is('.app-control-btn')) {
@@ -714,7 +743,7 @@ $(function() {
 			var lsstr = YL.Options.GetCurrentSettings()
 			var launchSettings = JSON.parse(lsstr)
 
-			var loncherStartPanelCB = new StyledComboBox(launchSettings.StartPage, [
+			var loncherStartPanelCB = new StyledComboBox('' + launchSettings.StartPage, [
 				{ Text: settingsLocale.SettingsOpeningPanelChangelog, Value: "0" }
 				, { Text: settingsLocale.SettingsOpeningPanelStatus, Value: "1" }
 				, { Text: settingsLocale.SettingsOpeningPanelMods, Value: "3" }
@@ -728,7 +757,7 @@ $(function() {
 
 			//alert(lsstr)
 
-			var loncherLoggingLevelCB = new StyledComboBox(launchSettings.LoggingLevel, [
+			var loncherLoggingLevelCB = new StyledComboBox('' + launchSettings.LoggingLevel, [
 				{ Text: "Отключить логирование", Value: "-1" }
 				, { Text: "Основная информация", Value: "0" }
 				, { Text: "Расширенная информация", Value: "1" }
@@ -779,6 +808,12 @@ $(function() {
 			cb = new StyledCheckBox(settingsLocale.SettingsHiddenMods, strToBool(launchSettings.ShowHiddenMods))
 			cb.OnChange = function(isChecked) {
 				YL.Options.CheckShowHiddenMods(isChecked)
+			}
+			cb.Container.appendTo($('<p>').appendTo(content))
+
+			cb = new StyledCheckBox(settingsLocale.SettingsModsCompactMode, strToBool(launchSettings.ModsCompactMode))
+			cb.OnChange = function(isChecked) {
+				YL.Options.CheckShowModsCompactMode(isChecked)
 			}
 			cb.Container.appendTo($('<p>').appendTo(content))
 
@@ -845,22 +880,36 @@ $(function() {
 
 	setTimeout(function() {
 		YL.CheckModUpdates()
+		updateBodySizeClasses()
 	}, 10)
 });
 
 function YLExtInit() {
-	mainLocale = YL.GetLocs('LaunchBtn, UpdateBtn, Close, Minimize, Help, About'
-		+ ', ChangelogBtn, LinksBtn, DonateBtn, StatusBtn, SettingsBtn, FAQBtn, ModsBtn, ChangelogTooltip, StatusTooltip, LinksTooltip, DonateTooltip, SettingsTooltip, ModsTooltip, FAQTooltip')
+	mainLocale = YL.GetLocs(
+		'LaunchBtn, UpdateBtn, Close, Minimize, Help, About, ChangelogBtn, LinksBtn, DonateBtn, StatusBtn, SettingsBtn, FAQBtn, ModsBtn'
+		+ ', ChangelogTooltip, StatusTooltip, LinksTooltip, DonateTooltip, SettingsTooltip, ModsTooltip, FAQTooltip'
+	);
 
-	modsLocale = YL.GetLocs('ModInstallationInProgress, InstallMod, EnableMod, DisableMod, UninstallMod, NeedsDonationMod, NoModsForThisVersion, ModDetailedInfo')
+	modsLocale = YL.GetLocs(
+		'ModInstallationInProgress, InstallMod, EnableMod, DisableMod, UninstallMod, NeedsDonationMod'
+		+ ', NoModsForThisVersion, ModDetailedInfo, ModConflictsHintTitle, ModConflictsHintTextSingle'
+		+ ', ModConflictsHintTextPlural, ModDependenciesHintTitle, ModDependenciesHintTextSingle'
+		+ ', ModDependenciesHintTextPlural, ModDependenciesHintOR, ModNotesHintTitle'
+	);
 
-	statusLocale = YL.GetLocs('StatusListDownloadedFile, StatusListDownloadedFileTooltip, StatusListRecommendedFile, StatusListRecommendedFileTooltip,'
+	statusLocale = YL.GetLocs(
+		'StatusListDownloadedFile, StatusListDownloadedFileTooltip, StatusListRecommendedFile, StatusListRecommendedFileTooltip,'
 		+ ', StatusListOptionalFile, StatusListOptionalFileTooltip, StatusListRequiredFile, StatusListOptionalFileTooltip'
-		+ ', StatusComboboxDownload, StatusComboboxDownloadForced, StatusComboboxNoDownload, StatusComboboxUpdate, StatusComboboxUpdateForced, StatusComboboxNoUpdate')
+		+ ', StatusComboboxDownload, StatusComboboxDownloadForced, StatusComboboxNoDownload, StatusComboboxUpdate'
+		+ ', StatusComboboxUpdateForced, StatusComboboxNoUpdate'
+	);
 
-	settingsLocale = YL.GetLocs('SettingsTitle, SettingsGamePath, Browse, SettingsOpeningPanel, SettingsOpeningPanelChangelog,'
-		+ ', SettingsOpeningPanelStatus, SettingsOpeningPanelLinks, SettingsOpeningPanelMods, SettingsCloseOnLaunch, SettingsGogGalaxy'
-		+ ', SettingsOfflineMode, SettingsHiddenMods, SettingsCreateShortcut, SettingsOpenDataFolder, SettingsMakeBackup, SettingsUninstallLoncher')
+	settingsLocale = YL.GetLocs(
+		'SettingsTitle, SettingsGamePath, Browse, SettingsOpeningPanel, SettingsOpeningPanelChangelog,'
+		+ ', SettingsOpeningPanelStatus, SettingsOpeningPanelLinks, SettingsOpeningPanelMods, SettingsCloseOnLaunch'
+		+ ', SettingsGogGalaxy, SettingsOfflineMode, SettingsHiddenMods, SettingsModsCompactMode, SettingsCreateShortcut'
+		+ ', SettingsOpenDataFolder, SettingsMakeBackup, SettingsUninstallLoncher'
+	);
 
 	YL.On('ProgressBarUpdate', function(event) {
 		progressBar.SetValue(event.Progress)
@@ -873,100 +922,189 @@ function YLExtInit() {
 		launchBtn.Update(event.IsReady, event.Enabled)
 	})
 
-	YL.On('ModsViewUpdate', function(modsList) {
-		var modsContent = $('#ModsView .article-content') //touchScrollControllers['Mods']
-		modsContent.empty()
-		if (!modsList) {
-			$("<div class='noMods'>").appendTo(modsContent).text("No Modlist provided")
+	YL.On('ModsViewUpdate', function(modsData) {
+		var modsContent$ = $('#ModsView .article-content') //touchScrollControllers['Mods']
+		modsContent$.empty()
+		if (!modsData) {
+			$("<div class='noMods'>").appendTo(modsContent$).text("No ModsData provided")
+			return
 		}
-		else if (modsList.length) {
+		if (!(modsData.ModList instanceof Array)) {
+			$("<div class='noMods'>").appendTo(modsContent$).text("ModsData contains no valid ModList")
+			return
+		}
+		if (modsData.ModList.length) {
 			modTabIdx = 50
+			if (modsData.ModsCompactMode) {
+				modsContent$.addClass('compact')
+			}
+			else {
+				modsContent$.removeClass('compact')
+			}
 			var depi = 0
-			var namelessGroup = $("<div class='modsGroup'>").appendTo(modsContent)
+			var namelessGroup$ = $("<div class='modsGroup'>").appendTo(modsContent$)
 			var groups = {}
-			for (var i = 0; i < modsList.length; i++) {
-				var modInfo = modsList[i]
-				var modEntry = $("<div class='modEntry'>")
+			for (var i = 0; i < modsData.ModList.length; i++) {
+				;(function(modInfo) {
+					var modEntry$ = make$("div modEntry")
+					if (modsData.ModsCompactMode) {
+						modEntry$.addClass('compact')
+					}
 
-				if (modInfo.Group) {
-					var group = groups[modInfo.Group.Id]
-					if (group) {
-						modEntry.appendTo(group)
+					if (modInfo.Group) {
+						var group = groups[modInfo.Group.Id]
+						if (group) {
+							modEntry$.appendTo(group)
+						}
+						else {
+							groups[modInfo.Group.Id] = make$("div modsGroup").appendTo(modsContent$).append(
+								make$("div modsGroupTitle").text(modInfo.Group.Name)
+								, modEntry$
+							)
+						}
 					}
 					else {
-						groups[modInfo.Group.Id] = $("<div class='modsGroup'>").appendTo(modsContent).append(
-							$("<div class='modsGroupTitle'>").text(modInfo.Group.Name)
-							, modEntry
-						)
+						modEntry$.appendTo(namelessGroup$)
 					}
-				}
-				else {
-					modEntry.appendTo(namelessGroup)
-				}
-				
-				var modControls = $("<div class='modControls'>")
-				var modWarnings = $("<div class='modWarnings'>")
-				var modDetails = $("<div class='modDesc'>").bbCode(modInfo.Description)
-				modEntry[0].modId = modInfo.Id
-				modEntry.append(
-					$("<div class='modTitle'>").text(modInfo.Name)
-					, modDetails
-					, modControls
-					, modWarnings
-				)
+					
+					var modControls$ = make$("div modControls")
+					var modWarnings$ = make$("div modWarnings")
+					var modDetails$ = make$("div modDesc").bbCode(modInfo.Description)
+					modEntry$[0].modId = modInfo.Id
+					modEntry$.append(
+						make$("div modTitle").text(modInfo.Name)
+						, modDetails$
+						, modControls$
+						, modWarnings$
+					)
 
-				if (modInfo.Screenshots || modInfo.DetailedDescription) {
-					$("<div class='modControlButton details'>").text(modsLocale["ModDetailedInfo"]).onActivate(function() {
-						showModDetails(this.__modInfo)
-					}).attr('tabindex', modTabIdx++).appendTo(modDetails)[0].__modInfo = modInfo
-				}
+					if (modInfo.Screenshots || modInfo.DetailedDescription) {
+						make$("div modControlButton details").text(modsLocale["ModDetailedInfo"]).onActivate(function() {
+							showModDetails(this.__modInfo)
+						}).attr('tabindex', modTabIdx++).appendTo(modDetails$)[0].__modInfo = modInfo
+					}
 
-				if (modInfo.DlInProgress) {
-					modEntry.addClass('loading')
-					$("<div class='modLoadingLabel'>").text(modsLocale["ModInstallationInProgress"]).appendTo(modControls)
-				}
-				else if (modInfo.NeedsDonation) {
-					createModBtn(modControls, 'NeedsDonation')
-				}
-				else if (!modInfo.Installed) {
-					createModBtn(modControls, 'Install')
-				}
-				else {
-					if (modInfo.Active) {
-						modEntry.addClass("active")
-						createModBtn(modControls, 'Disable')
+					if (modInfo.DlInProgress) {
+						modEntry$.addClass('loading')
+						make$("div modLoadingLabel").text(modsLocale["ModInstallationInProgress"]).appendTo(modControls$)
+					}
+					else if (modInfo.NeedsDonation) {
+						createModBtn(modControls$, 'NeedsDonation')
+					}
+					else if (!modInfo.Installed) {
+						//createModBtn(modControls$, 'Install')
+
+						make$("div modControlButton install").attr({
+							tabindex: modTabIdx++
+							, title: modsLocale["InstallMod"]
+						}).text(modsLocale["InstallMod"]).appendTo(modControls$).onActivate(function() {
+							var id = modInfo.Id
+							var this_el = this
+							switch (modInfo.Versions.length) {
+								case 0:
+									$(this_el).remove()
+									break
+								case 1:
+									YL.ModInstall(id, modInfo.Versions[0].Id)
+									break
+								default: {
+									Dialog.SetTitle("Выберите версию мода")
+									var versionList$ = make$("div modVersionList")
+									for (var vi = 0; vi < modInfo.Versions.length; vi++) {
+										;(function(version) {
+											var verModEntry$ = make$("div modEntry").appendTo(versionList$)
+											var vmodControls$ = make$("div modControls")
+											
+											make$("div modControlButton install").attr({
+												tabindex: modTabIdx++
+												, title: modsLocale["InstallMod"]
+											}).text(modsLocale["InstallMod"]).appendTo(vmodControls$).onActivate(function() {
+												YL.ModInstall(id, version.Id)
+												Dialog.Hide()
+											})
+											
+											verModEntry$.append(
+												make$("div modTitle").text(version.Name)
+												, make$("div modDesc").bbCode(version.Description)
+												, vmodControls$
+												, make$("div modWarnings")
+											)
+										})(modInfo.Versions[vi])
+									}
+									Dialog.Content$.append(versionList$)
+									Dialog.Show()
+									break
+								}
+							}
+						})
 					}
 					else {
-						modEntry.addClass("inactive")
-						createModBtn(modControls, 'Enable')
+						if (modInfo.Active) {
+							modEntry$.addClass("active")
+							createModBtn(modControls$, 'Disable')
+						}
+						else {
+							modEntry$.addClass("inactive")
+							createModBtn(modControls$, 'Enable')
+						}
+						modEntry$.addClass("installed")
+						createModBtn(modControls$, 'Uninstall')
 					}
-					modEntry.addClass("installed")
-					createModBtn(modControls, 'Uninstall')
-				}
 
-				if (modInfo.Conflicts && modInfo.Conflicts.length) {
-					addModWarning('conflictWarning', modWarnings, "Конфликтующие моды", "Этот мод конфликтует со следующими модами:[n]" + modInfo.Conflicts.join('[n]'))
-				}
-				if (modInfo.Dependencies && modInfo.Dependencies.length) {
-					var depstr = modInfo.Dependencies.length > 1 ? "требуются следующие моды:[n]" : "требуется мод: "
-					var depmodlist = ""
-					for (depi = 0; depi < modInfo.Dependencies.length; depi++) {
-						depmodlist += modInfo.Dependencies[depi].join(' ИЛИ ') + '[n]'
+					if (!modInfo.DlInProgress && modInfo.IsUpdateAvailable) {
+						addModWarning('needsUpdate', modWarnings$, modsLocale["ModNeedsUpdateHintTitle"], function() {
+							
+						})
 					}
-					addModWarning('dependencyWarning', modWarnings, "Зависимости", "Для работы этого мода " + depstr + depmodlist)
-				}
+					if (modInfo.ImportantNotes) {
+						addModWarning('notesWarning', modWarnings$, modsLocale["ModNotesHintTitle"], modInfo.ImportantNotes)
+					}
+					if (modInfo.Conflicts && modInfo.Conflicts.length) {
+						var conflictText = modsLocale[modInfo.Conflicts.length > 1 ? "ModConflictsHintTextPlural" : "ModConflictsHintTextSingle"]
+						addModWarning('conflictWarning', modWarnings$, modsLocale["ModConflictsHintTitle"], conflictText + modInfo.Conflicts.join('[n]'))
+					}
+					if (modInfo.Dependencies && modInfo.Dependencies.length) {
+						var depstr = modsLocale[modInfo.Dependencies.length > 1 ? "ModDependenciesHintTextPlural" : "ModDependenciesHintTextSingle"]
+						var orstr = ' ' + modsLocale["ModDependenciesHintOR"] + ' '
+						var depmodlist = ""
+						for (depi = 0; depi < modInfo.Dependencies.length; depi++) {
+							depmodlist += modInfo.Dependencies[depi].join(orstr) + '[n]'
+						}
+						addModWarning('dependencyWarning', modWarnings$, modsLocale["ModDependenciesHintTitle"], depstr + depmodlist)
+					}
+				})(modsData.ModList[i])
+			}
+
+			function createModBtn(modControls$, key) {
+				var caption = modsLocale[key + "Mod"];
+				make$("div modControlButton " + key.toLowerCase()).attr({
+					tabindex: modTabIdx++
+					, title: caption
+				}).text(caption).appendTo(modControls$).onActivate(function() {
+					var id = $(this).parents('.modEntry')[0].modId
+					YL['Mod' + key](id)
+				})
 			}
 		}
 		else {
-			$("<div class='noMods'>").appendTo(modsContent).text(modsLocale["NoModsForThisVersion"])
+			make$("div noMods").appendTo(modsContent$).text(modsLocale["NoModsForThisVersion"])
 		}
+
+		requestAnimationFrame(function() {
+			touchScrollControllers["Mods"].TouchScrollCheck()
+		})
 	});
 
 	function addModWarning(wclass, parent, wheader, wtext) {
-		$('<div>').addClass(wclass).appendTo(parent).click(function() {
-			Dialog.SetTitle(wheader)
-			Dialog.Content$.bbCode(wtext)
-			Dialog.Show(true)
+		$('<div>').attr('title', wheader).addClass(wclass).appendTo(parent).click(function() {
+			if (typeof wtext == 'function') {
+				wtext()
+			}
+			else {
+				Dialog.SetTitle(wheader)
+				Dialog.Content$.bbCode(wtext)
+				Dialog.Show(true)
+			}
 		})
 	}
 

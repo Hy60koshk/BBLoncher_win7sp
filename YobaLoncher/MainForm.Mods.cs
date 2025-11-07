@@ -27,7 +27,7 @@ namespace YobaLoncher {
 		}
 
 		private async Task<bool> FinalizeModDownload(ModInfo modInfo) {
-			List<FileInfo> files = modInfo.FilesForLatestVersion;
+			List<FileInfo> files = modInfo.FilesForUpdate;
 			int progressStep = progressBarInfo_.MaxValue / files.Count;
 			bool success = false;
 			string filename = "";
@@ -84,7 +84,9 @@ namespace YobaLoncher {
 			}
 			if (currentMod_ != null) {
 				if (currentFile_ is null) {
-					var modFileList = new LinkedList<FileInfo>(currentMod_.Value.FilesForLatestVersion.FindAll(fi => !fi.IsOK && fi.HasValidInfo));
+					LinkedList<FileInfo> modFileList = new LinkedList<FileInfo>(
+						currentMod_.Value.FilesForUpdate.FindAll(fi => !fi.IsOK && fi.HasValidInfo)
+					);
 					if (modFileList.Count > 0) {
 						currentFile_ = modFileList.First;
 						DownloadFile(currentFile_.Value);

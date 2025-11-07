@@ -7,8 +7,11 @@ using System.Windows.Forms;
 
 namespace YobaLoncher {
 	static class Program {
+#if DEBUG
+		public readonly static string SETTINGS_URL = "https://koshk.sbs/battlebrothers/settings_debug.json";
+#else
 		public readonly static string SETTINGS_URL = "https://koshk.sbs/battlebrothers/settings.json";
-		
+#endif
 		public static LauncherData LoncherSettings;
 		public static bool OfflineMode = false;
 		public static string PreviousVersionHash = null;
@@ -26,7 +29,7 @@ namespace YobaLoncher {
 		public static string VersionInfo => String.Format(_about, _version, _buildNumber, _buildVersion);
 
 		private static string _loncherName = "YobaLoncher";
-		private static string _version = "1.0.2.5-win7";
+		private static string _version = "1.1.0.0-win7";
 		private static string _buildVersion = "1.1";
 		private static string _buildNumber = "";
 		private static string _about = "YobaLöncher {0}-{1}";

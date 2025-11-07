@@ -1,5 +1,4 @@
 /**
- * A fork of EC.TouchScroll (c) Hy60koshk, CCRS
 	args:
 		Element: the HTML element the touchscroll is being applied to
 		IsHorizontal (boolean, false) - горизонтальная ли прокрутка
@@ -80,380 +79,380 @@ else {
 */
 
 var addTouchScroll = function(args) {
-		var _self = this
-		var _element$ = args.Element;
-		var _isHorizontal = args.IsHorizontal ? true : false;
-		var _MEASURE = _isHorizontal ? 'width' : 'height'
-		//_element$.style[_isHorizontal ? 'overflowX' : 'overflowY'] = 'hidden'
-		var _drawArrows = args.DrawArrows ? true : false;
-		var _arrowUpClass = _arrowDownClass = null
-		if (_drawArrows && (typeof args.DrawArrows == 'object')) {
-			_arrowUpClass = args.DrawArrows.up
-			_arrowDownClass = args.DrawArrows.down
-		}
-		var _drawScrollBar = args.DrawScrollBar ? true : false;
-		var _drawArrowsInBar = args.InbarArrows ? true : false;
-		var _arrowsForceDisplayNone = args.ArrowsForceDisplayNone ? true : false;
-		var _allowArrowClick = args.AllowArrowClick === false ? false : true;
-		var _onReady = []
-		var _container$ = _element$.parentElement;
-		_container$.classList.add(_isHorizontal ? 'horizontal' : 'vertical')
-		var _startPosition = 0
-		var _startY = 0
-		var _totalScroll = 0
-		var _arrows = {};
-		var _lastFullHeight = 0;
-		var _scrollBar = false
-		var _elementBoxHeight = 0
-		var _elementFullHeight = 0
-		var _scrollBarRatio = 0
-		var _scrollBarContainerHeight = 0
-		var _scrollBarHeight = 0
-		var _isReady = false
+	var _self = this
+	var _element$ = args.Element;
+	var _isHorizontal = args.IsHorizontal ? true : false;
+	var _MEASURE = _isHorizontal ? 'width' : 'height'
+	//_element$.style[_isHorizontal ? 'overflowX' : 'overflowY'] = 'hidden'
+	var _drawArrows = args.DrawArrows ? true : false;
+	var _arrowUpClass = _arrowDownClass = null
+	if (_drawArrows && (typeof args.DrawArrows == 'object')) {
+		_arrowUpClass = args.DrawArrows.up
+		_arrowDownClass = args.DrawArrows.down
+	}
+	var _drawScrollBar = args.DrawScrollBar ? true : false;
+	var _drawArrowsInBar = args.InbarArrows ? true : false;
+	var _arrowsForceDisplayNone = args.ArrowsForceDisplayNone ? true : false;
+	var _allowArrowClick = args.AllowArrowClick === false ? false : true;
+	var _onReady = []
+	var _container$ = _element$.parentElement;
+	_container$.classList.add(_isHorizontal ? 'horizontal' : 'vertical')
+	var _startPosition = 0
+	var _startY = 0
+	var _totalScroll = 0
+	var _arrows = {};
+	var _lastFullHeight = 0;
+	var _scrollBar = false
+	var _elementBoxHeight = 0
+	var _elementFullHeight = 0
+	var _scrollBarRatio = 0
+	var _scrollBarContainerHeight = 0
+	var _scrollBarHeight = 0
+	var _isReady = false
 
-		if (typeof args.OnReady == 'function') {
-			_onReady.push(args.OnReady)
-		}
-		
-		_element$.SuspendTouchScrollCheck = true;
-		
-		_element$.OnReady = function(func) {
-			if (typeof func == 'function') {
-				if (!_isReady) {
-					_onReady.push(func)
-				} else {
-					func()
-				}
+	if (typeof args.OnReady == 'function') {
+		_onReady.push(args.OnReady)
+	}
+	
+	_element$.SuspendTouchScrollCheck = true;
+	
+	_element$.OnReady = function(func) {
+		if (typeof func == 'function') {
+			if (!_isReady) {
+				_onReady.push(func)
+			} else {
+				func()
 			}
 		}
-		_element$.TouchScrollCheck = function() {
-			_checkFitting()
-		}
-		_element$.GetScroll = function() {
-			return _isHorizontal ? _element$.scrollLeft : _element$.scrollTop
-		}
-		_element$.ScrollTo = function(element$) {
-			_element$.OnReady(function() {
-				if (typeof element$ == 'number') {
-					_setScrollTop(element$)
-					return
+	}
+	_element$.TouchScrollCheck = function() {
+		_checkFitting()
+	}
+	_element$.GetScroll = function() {
+		return _isHorizontal ? _element$.scrollLeft : _element$.scrollTop
+	}
+	_element$.ScrollTo = function(element$) {
+		_element$.OnReady(function() {
+			if (typeof element$ == 'number') {
+				_setScrollTop(element$)
+				return
+			}
+			else if (!(element$ instanceof HTMLElement)) {
+				return
+			}
+			var top = 0, child = element$
+			parent = child.parentElement
+			do {
+				top += _isHorizontal ? child.offsetTop : child.offsetLeft
+				var parentPosition = parent.style.position
+				var wentUp = false
+				while ((parentPosition != 'absolute') && (parentPosition != 'relative') && containerHasntYetHit()) {
+					child = child.parentElement
+					parent = child.parentElement
+					parentPosition = parent.style.position
+					wentUp = true
 				}
-				else if (!(element$ instanceof HTMLElement)) {
-					return
+				if (!wentUp) {
+					child = child.parentElement
+					parent = child.parentElement
 				}
-				var top = 0, child = element$
-				parent = child.parentElement
-				do {
-					top += _isHorizontal ? child.offsetTop : child.offsetLeft
-					var parentPosition = parent.style.position
-					var wentUp = false
-					while ((parentPosition != 'absolute') && (parentPosition != 'relative') && containerHasntYetHit()) {
-						child = child.parentElement
-						parent = child.parentElement
-						parentPosition = parent.style.position
-						wentUp = true
-					}
-					if (!wentUp) {
-						child = child.parentElement
-						parent = child.parentElement
-					}
-				} while (containerHasntYetHit());
+			} while (containerHasntYetHit());
 
-				_setScrollTop(top)
+			_setScrollTop(top)
 
-				function containerHasntYetHit() {
-					return (parent != _element$) && (child != _element$)
-				}
-			})
-		}
+			function containerHasntYetHit() {
+				return (parent != _element$) && (child != _element$)
+			}
+		})
+	}
+	
+	var _doesFit = true;
+
+	_element$.deferred(function() {
+		_checkFitting()
+		_element$.SuspendTouchScrollCheck = false
+		_isReady = true
 		
-		var _doesFit = true;
-
 		_element$.deferred(function() {
-			_checkFitting()
-			_element$.SuspendTouchScrollCheck = false
-			_isReady = true
-			
-			_element$.deferred(function() {
-				for (var i = 0; i < _onReady.length; i++) {
-					_onReady[i]()
-				}
-			});
+			for (var i = 0; i < _onReady.length; i++) {
+				_onReady[i]()
+			}
 		});
+	});
 
-		if (IE9) {
-			spawn(_container$, 'div', 'article-scrollbar-hider')
+	if (IE9) {
+		spawn(_container$, 'div', 'article-scrollbar-hider')
+	}
+
+	if (_drawArrows) {
+		_arrows.up$ = spawn(_container$, 'div', 'touchScrollArrowUp inactive unused')
+		_arrows.down$ = spawn(_container$, 'div', 'touchScrollArrowDown inactive unused')
+		if (_arrowUpClass) {
+			_arrows.up$.classList.add(_arrowUpClass)
 		}
-
-		if (_drawArrows) {
-			_arrows.up$ = spawn(_container$, 'div', 'touchScrollArrowUp inactive unused')
-			_arrows.down$ = spawn(_container$, 'div', 'touchScrollArrowDown inactive unused')
-			if (_arrowUpClass) {
-				_arrows.up$.classList.add(_arrowUpClass)
-			}
-			if (_arrowDownClass) {
-				_arrows.down$.classList.add(_arrowDownClass)
-			}
-			if (_drawArrowsInBar) {
-				_arrows.up$.classList.add('InbarArrows')
-				_arrows.down$.classList.add('InbarArrows')
-			}
-			if (_arrowsForceDisplayNone) {
-				_arrows.up$.hide()
-				_arrows.down$.hide()
-			}
-			
-			if (_allowArrowClick) {
-				_arrows.down$.addEventListener('click', function (event) {
-					var scrollTop = _element$.GetScroll()
-					var skiph = _elementBoxHeight * 0.67;
-					if (scrollTop + skiph + _elementBoxHeight >= _elementFullHeight) {
-						skiph = _elementFullHeight - scrollTop;
-					}
-					_setScrollTop(scrollTop + skiph)
-				});
-				_arrows.up$.addEventListener('click', function (event) {
-					var scrollTop = _element$.GetScroll()
-					var skiph = (_isHorizontal ? _element$.offsetWidth : _element$.offsetHeight) * 0.67;
-					if (scrollTop - skiph <= 0) {
-						skiph = scrollTop
-					}
-					_setScrollTop(scrollTop - skiph)
-				});
-			}
+		if (_arrowDownClass) {
+			_arrows.down$.classList.add(_arrowDownClass)
 		}
-		if (_drawScrollBar) {
-			_scrollBar = {
-				position: 0
-				, clickPos: 0
-			}
-			_scrollBar.bar$ = spawn(_container$, 'div', 'touchScrollBar')
-			_scrollBar.line$ = spawn(_scrollBar.bar$, 'div', 'touchScrollBarLine')
-			_scrollBar.handle$ = spawn(_scrollBar.bar$, 'div', 'touchScrollBarHandle')
-			_scrollBar.handleDisplay$ = spawn(_scrollBar.handle$, 'div', 'touchScrollBarHandleDisplay')
-			if (_drawArrowsInBar) {
-				_scrollBar.bar$.classList.add('InbarArrows')
-			}
-			
-			_scrollBar.bar$.hide()
-
-			_scrollBar.handle$.addEventListener('mousedown', function (event) {
-				_startY = _isHorizontal ? event.clientX : event.clientY
-				_startPosition = _element$.GetScroll()
-				_clickBreaker$.show()
-				_scrollBar.bar$.classList.add('scrolling')
-				document.addEventListener('mousemove', _scrollBarMouseMoveEvent)
-				document.addEventListener('mouseup', _scrollBarMouseUpEvent)
+		if (_drawArrowsInBar) {
+			_arrows.up$.classList.add('InbarArrows')
+			_arrows.down$.classList.add('InbarArrows')
+		}
+		if (_arrowsForceDisplayNone) {
+			_arrows.up$.hide()
+			_arrows.down$.hide()
+		}
+		
+		if (_allowArrowClick) {
+			_arrows.down$.addEventListener('click', function (event) {
+				var scrollTop = _element$.GetScroll()
+				var skiph = _elementBoxHeight * 0.67;
+				if (scrollTop + skiph + _elementBoxHeight >= _elementFullHeight) {
+					skiph = _elementFullHeight - scrollTop;
+				}
+				_setScrollTop(scrollTop + skiph)
 			});
-			_scrollBar.bar$.addEventListener('click', function (event) {
-				if (event.target != _scrollBar.handle$) {
-					var offset = _isHorizontal ? (event.clientX - _scrollBar.bar$.offsetLeft)
-												: (event.clientY - _scrollBar.bar$.offsetTop)
-					var center = _elementFullHeight * (offset / _scrollBarContainerHeight)
-					var newScrollTop = center - _elementBoxHeight / 2
-					
-					_setScrollTop(newScrollTop)
+			_arrows.up$.addEventListener('click', function (event) {
+				var scrollTop = _element$.GetScroll()
+				var skiph = (_isHorizontal ? _element$.offsetWidth : _element$.offsetHeight) * 0.67;
+				if (scrollTop - skiph <= 0) {
+					skiph = scrollTop
 				}
-			})
+				_setScrollTop(scrollTop - skiph)
+			});
 		}
+	}
+	if (_drawScrollBar) {
+		_scrollBar = {
+			position: 0
+			, clickPos: 0
+		}
+		_scrollBar.bar$ = spawn(_container$, 'div', 'touchScrollBar')
+		_scrollBar.line$ = spawn(_scrollBar.bar$, 'div', 'touchScrollBarLine')
+		_scrollBar.handle$ = spawn(_scrollBar.bar$, 'div', 'touchScrollBarHandle')
+		_scrollBar.handleDisplay$ = spawn(_scrollBar.handle$, 'div', 'touchScrollBarHandleDisplay')
+		if (_drawArrowsInBar) {
+			_scrollBar.bar$.classList.add('InbarArrows')
+		}
+		
+		_scrollBar.bar$.hide()
 
-		function recalculateSizes() {
-			_elementBoxHeight = _isHorizontal ? _element$.offsetWidth : _element$.offsetHeight
-			var ebhDec = _elementBoxHeight % 1
-			if (ebhDec > 0) {
-				_elementBoxHeight -= ebhDec
-				if (ebhDec > 0.25) {
-					_elementBoxHeight++
-				}
+		_scrollBar.handle$.addEventListener('mousedown', function (event) {
+			_startY = _isHorizontal ? event.clientX : event.clientY
+			_startPosition = _element$.GetScroll()
+			_clickBreaker$.show()
+			_scrollBar.bar$.classList.add('scrolling')
+			document.addEventListener('mousemove', _scrollBarMouseMoveEvent)
+			document.addEventListener('mouseup', _scrollBarMouseUpEvent)
+		});
+		_scrollBar.bar$.addEventListener('click', function (event) {
+			if (event.target != _scrollBar.handle$) {
+				var offset = _isHorizontal ? (event.clientX - _scrollBar.bar$.offsetLeft)
+											: (event.clientY - _scrollBar.bar$.offsetTop)
+				var center = _elementFullHeight * (offset / _scrollBarContainerHeight)
+				var newScrollTop = center - _elementBoxHeight / 2
+				
+				_setScrollTop(newScrollTop)
 			}
-			; _isHorizontal ? _recalculateFullWidth() : _recalculateFullHeight()
-		}
-		
-		function _recalculateFullHeight() {
-			_elementFullHeight = _element$.scrollHeight;
-		}
-		
-		function _recalculateFullWidth() {
-			_elementFullHeight = _element$.scrollWidth;
-		}
-		
-		function _checkFitting() {
-			recalculateSizes()
-			var doesFit = _elementBoxHeight >= _elementFullHeight;
-			 
-			if (_drawArrowsInBar && _drawArrows) {
-				var arrowUpHeight = _arrows.up$.css(_MEASURE)
-				var arrowDownHeight = _arrows.down$.css(_MEASURE) // arrows may be of different size (tfw tho)
-				arrowUpHeight = arrowUpHeight.substring(0, arrowUpHeight.length - 2)
-				arrowDownHeight = arrowDownHeight.substring(0, arrowDownHeight.length - 2)
-				_scrollBarContainerHeight = _elementBoxHeight - arrowUpHeight - arrowDownHeight
-			} else {
-				_scrollBarContainerHeight = _elementBoxHeight
-			}
-			if (doesFit != _doesFit) {
-				_doesFit = doesFit
-				if (_doesFit) {
-					_element$.classList.remove('scroll')
-					if (_drawArrows) {
-						_arrows.down$.classList.add('unused')
-						_arrows.up$.classList.add('unused')
-						if (_arrowsForceDisplayNone) {
-							_arrows.down$.hide()
-							_arrows.up$.hide()
-						}
-					}
-					if (_drawScrollBar) {
-						_scrollBar.bar$.hide()
-					}
-					_unbindHandlers()
-				}
-				else {
-					_element$.classList.add('scroll')
-					if (_drawArrows) {
-						if (_arrowsForceDisplayNone) {
-							_arrows.down$.show()
-						}
-						_arrows.down$.classList.remove('unused')
-						_arrows.up$.classList.remove('unused')
-						_arrows.down$.classList.remove('inactive');
-					}
-					if (_drawScrollBar) {
-						_scrollBar.bar$.style[_MEASURE] = _scrollBarContainerHeight + 'px'
-						_scrollBar.bar$.show()
-					}
-					_bindHandlers()
-					
-					_element$.deferred(function() {
-						recalculateSizes()
-						if (_drawScrollBar && !_doesFit) {
-							_scrollBarRatio = _scrollBarContainerHeight / _elementFullHeight
-							_scrollBarHeight = _elementBoxHeight * _scrollBarRatio
-							_scrollBar.handle$.style[_MEASURE] = _scrollBarHeight + 'px'
-						}
-					});
-				}
-			}
-			else if (_drawScrollBar && !_doesFit) {
-				_scrollBarRatio = _scrollBarContainerHeight / _elementFullHeight
-				_scrollBarHeight = _elementBoxHeight * _scrollBarRatio
-				_scrollBar.handle$.style[_MEASURE] = _scrollBarHeight + 'px'
-				_scrollBar.bar$.style[_MEASURE] = _scrollBarContainerHeight + 'px'
-			}
-		}
-		
-		function _doScrollBarScroll(clientY) {
-			var scrollTop = _startPosition + (clientY - _startY) / _scrollBarRatio;
-			_setScrollTop(scrollTop)
-		}
+		})
+	}
 
-		function _doTouchScroll(clientY) {
-			var scrollTop = _startPosition - clientY + _startY
-			_totalScroll = _totalScroll + (clientY - _startY)
-			if (_totalScroll > 6 || _totalScroll < -6) {
-				_clickBreaker$.show()
+	function recalculateSizes() {
+		_elementBoxHeight = _isHorizontal ? _element$.offsetWidth : _element$.offsetHeight
+		var ebhDec = _elementBoxHeight % 1
+		if (ebhDec > 0) {
+			_elementBoxHeight -= ebhDec
+			if (ebhDec > 0.25) {
+				_elementBoxHeight++
 			}
-			_setScrollTop(scrollTop)
 		}
-		
-		function _setScrollTop(scrollTop) {
-			if (_isHorizontal) {
-				_element$.scrollLeft = scrollTop
-			} else {
-				_element$.scrollTop = scrollTop
-			}
-			if (!_doesFit && _drawArrows) {
-				if (scrollTop > 0) {
-					_arrows.up$.classList.remove('inactive')
+		; _isHorizontal ? _recalculateFullWidth() : _recalculateFullHeight()
+	}
+	
+	function _recalculateFullHeight() {
+		_elementFullHeight = _element$.scrollHeight;
+	}
+	
+	function _recalculateFullWidth() {
+		_elementFullHeight = _element$.scrollWidth;
+	}
+	
+	function _checkFitting() {
+		recalculateSizes()
+		var doesFit = _elementBoxHeight >= _elementFullHeight;
+		 
+		if (_drawArrowsInBar && _drawArrows) {
+			var arrowUpHeight = _arrows.up$.css(_MEASURE)
+			var arrowDownHeight = _arrows.down$.css(_MEASURE) // arrows may be of different size (tfw tho)
+			arrowUpHeight = arrowUpHeight.substring(0, arrowUpHeight.length - 2)
+			arrowDownHeight = arrowDownHeight.substring(0, arrowDownHeight.length - 2)
+			_scrollBarContainerHeight = _elementBoxHeight - arrowUpHeight - arrowDownHeight
+		} else {
+			_scrollBarContainerHeight = _elementBoxHeight
+		}
+		if (doesFit != _doesFit) {
+			_doesFit = doesFit
+			if (_doesFit) {
+				_element$.classList.remove('scroll')
+				if (_drawArrows) {
+					_arrows.down$.classList.add('unused')
+					_arrows.up$.classList.add('unused')
 					if (_arrowsForceDisplayNone) {
-						_arrows.up$.show()
-					}
-				} else {
-					_arrows.up$.classList.add('inactive')
-					if (_arrowsForceDisplayNone) {
+						_arrows.down$.hide()
 						_arrows.up$.hide()
 					}
 				}
-				if (_elementBoxHeight < (_elementFullHeight - scrollTop)) {
-					_arrows.down$.classList.remove('inactive')
+				if (_drawScrollBar) {
+					_scrollBar.bar$.hide()
+				}
+				_unbindHandlers()
+			}
+			else {
+				_element$.classList.add('scroll')
+				if (_drawArrows) {
 					if (_arrowsForceDisplayNone) {
 						_arrows.down$.show()
 					}
-				}  else {
-					_arrows.down$.classList.add('inactive')
-					if (_arrowsForceDisplayNone) {
-						_arrows.down$.hide()
+					_arrows.down$.classList.remove('unused')
+					_arrows.up$.classList.remove('unused')
+					_arrows.down$.classList.remove('inactive');
+				}
+				if (_drawScrollBar) {
+					_scrollBar.bar$.style[_MEASURE] = _scrollBarContainerHeight + 'px'
+					_scrollBar.bar$.show()
+				}
+				_bindHandlers()
+				
+				_element$.deferred(function() {
+					recalculateSizes()
+					if (_drawScrollBar && !_doesFit) {
+						_scrollBarRatio = _scrollBarContainerHeight / _elementFullHeight
+						_scrollBarHeight = _elementBoxHeight * _scrollBarRatio
+						_scrollBar.handle$.style[_MEASURE] = _scrollBarHeight + 'px'
 					}
-				}
-			}
-			if (_drawScrollBar) {
-				var scrollBarScrollTop = _scrollBarRatio * scrollTop
-				if (scrollBarScrollTop > _scrollBarContainerHeight - _scrollBarHeight) {
-					scrollBarScrollTop = _scrollBarContainerHeight - _scrollBarHeight
-				} else if (scrollTop < 0 ) {
-					scrollBarScrollTop = 0
-				}
-				_scrollBar.handle$.style[_isHorizontal ? 'marginLeft' : 'marginTop'] = scrollBarScrollTop + 'px'
+				});
 			}
 		}
-		
-		function _mouseMoveEvent(event) {
-			_doTouchScroll(_isHorizontal ? event.clientX : event.clientY)
+		else if (_drawScrollBar && !_doesFit) {
+			_scrollBarRatio = _scrollBarContainerHeight / _elementFullHeight
+			_scrollBarHeight = _elementBoxHeight * _scrollBarRatio
+			_scrollBar.handle$.style[_MEASURE] = _scrollBarHeight + 'px'
+			_scrollBar.bar$.style[_MEASURE] = _scrollBarContainerHeight + 'px'
 		}
-		function _mouseUpEvent(event) {
-			_clickBreaker$.hide()
-			document.removeEventListener('mousemove', _mouseMoveEvent)
-			document.removeEventListener('mouseup', _mouseUpEvent)
-		}
-		function _scrollBarMouseMoveEvent(event) {
-			_doScrollBarScroll(_isHorizontal ? event.clientX : event.clientY)
-		}
-		function _scrollBarMouseUpEvent(event) {
-			_clickBreaker$.hide()
-			_scrollBar.bar$.classList.remove('scrolling')
-
-			document.removeEventListener('mousemove', _scrollBarMouseMoveEvent);
-			document.removeEventListener('mouseup', _scrollBarMouseUpEvent);
-		}
-		function _mouseDownEvent(event) {
-			_totalScroll = 0
-			if (_isHorizontal) {
-				_startPosition = _element$.scrollLeft
-				_startY = event.clientX
-			} else {
-				_startPosition = _element$.scrollTop
-				_startY = event.clientY
-			}
-			document.addEventListener('mousemove', _mouseMoveEvent);
-			document.addEventListener('mouseup', _mouseUpEvent);
-			return false;
-		}
-		function _scrollEvent(event) {
-			_setScrollTop(_element$.GetScroll());
-		}
-		function _bindHandlers() {
-			_element$.addEventListener('scroll', _scrollEvent);
-		}
-		function _unbindHandlers() {
-			_element$.removeEventListener('scroll', _scrollEvent);
-		}
-		if (args.Mutable) {
-			var onDomChange = function () {
-				if (!_element$.SuspendTouchScrollCheck) {
-					_element$.SuspendTouchScrollCheck = true;
-					_element$.deferred(function() {
-						_checkFitting()
-						_element$.SuspendTouchScrollCheck = false
-					});
-				}
-			}
-			if (window.MutationObserver) {
-				(new MutationObserver(onDomChange)).observe(_element$, { childList: true })
-			}
-			else {
-				_element$.addEventListener("DOMNodeInserted", onDomChange)
-				_element$.addEventListener("DOMNodeRemoved", onDomChange)
-			}
-		}
-		
-		return _element$;
 	}
+	
+	function _doScrollBarScroll(clientY) {
+		var scrollTop = _startPosition + (clientY - _startY) / _scrollBarRatio;
+		_setScrollTop(scrollTop)
+	}
+
+	function _doTouchScroll(clientY) {
+		var scrollTop = _startPosition - clientY + _startY
+		_totalScroll = _totalScroll + (clientY - _startY)
+		if (_totalScroll > 6 || _totalScroll < -6) {
+			_clickBreaker$.show()
+		}
+		_setScrollTop(scrollTop)
+	}
+	
+	function _setScrollTop(scrollTop) {
+		if (_isHorizontal) {
+			_element$.scrollLeft = scrollTop
+		} else {
+			_element$.scrollTop = scrollTop
+		}
+		if (!_doesFit && _drawArrows) {
+			if (scrollTop > 0) {
+				_arrows.up$.classList.remove('inactive')
+				if (_arrowsForceDisplayNone) {
+					_arrows.up$.show()
+				}
+			} else {
+				_arrows.up$.classList.add('inactive')
+				if (_arrowsForceDisplayNone) {
+					_arrows.up$.hide()
+				}
+			}
+			if (_elementBoxHeight < (_elementFullHeight - scrollTop)) {
+				_arrows.down$.classList.remove('inactive')
+				if (_arrowsForceDisplayNone) {
+					_arrows.down$.show()
+				}
+			}  else {
+				_arrows.down$.classList.add('inactive')
+				if (_arrowsForceDisplayNone) {
+					_arrows.down$.hide()
+				}
+			}
+		}
+		if (_drawScrollBar) {
+			var scrollBarScrollTop = _scrollBarRatio * scrollTop
+			if (scrollBarScrollTop > _scrollBarContainerHeight - _scrollBarHeight) {
+				scrollBarScrollTop = _scrollBarContainerHeight - _scrollBarHeight
+			} else if (scrollTop < 0 ) {
+				scrollBarScrollTop = 0
+			}
+			_scrollBar.handle$.style[_isHorizontal ? 'marginLeft' : 'marginTop'] = scrollBarScrollTop + 'px'
+		}
+	}
+	
+	function _mouseMoveEvent(event) {
+		_doTouchScroll(_isHorizontal ? event.clientX : event.clientY)
+	}
+	function _mouseUpEvent(event) {
+		_clickBreaker$.hide()
+		document.removeEventListener('mousemove', _mouseMoveEvent)
+		document.removeEventListener('mouseup', _mouseUpEvent)
+	}
+	function _scrollBarMouseMoveEvent(event) {
+		_doScrollBarScroll(_isHorizontal ? event.clientX : event.clientY)
+	}
+	function _scrollBarMouseUpEvent(event) {
+		_clickBreaker$.hide()
+		_scrollBar.bar$.classList.remove('scrolling')
+
+		document.removeEventListener('mousemove', _scrollBarMouseMoveEvent);
+		document.removeEventListener('mouseup', _scrollBarMouseUpEvent);
+	}
+	function _mouseDownEvent(event) {
+		_totalScroll = 0
+		if (_isHorizontal) {
+			_startPosition = _element$.scrollLeft
+			_startY = event.clientX
+		} else {
+			_startPosition = _element$.scrollTop
+			_startY = event.clientY
+		}
+		document.addEventListener('mousemove', _mouseMoveEvent);
+		document.addEventListener('mouseup', _mouseUpEvent);
+		return false;
+	}
+	function _scrollEvent(event) {
+		_setScrollTop(_element$.GetScroll());
+	}
+	function _bindHandlers() {
+		_element$.addEventListener('scroll', _scrollEvent);
+	}
+	function _unbindHandlers() {
+		_element$.removeEventListener('scroll', _scrollEvent);
+	}
+	if (args.Mutable) {
+		var onDomChange = function () {
+			if (!_element$.SuspendTouchScrollCheck) {
+				_element$.SuspendTouchScrollCheck = true;
+				_element$.deferred(function() {
+					_checkFitting()
+					_element$.SuspendTouchScrollCheck = false
+				});
+			}
+		}
+		if (window.MutationObserver) {
+			(new MutationObserver(onDomChange)).observe(_element$, { childList: true })
+		}
+		else {
+			_element$.addEventListener("DOMNodeInserted", onDomChange)
+			_element$.addEventListener("DOMNodeRemoved", onDomChange)
+		}
+	}
+	
+	return _element$;
+}

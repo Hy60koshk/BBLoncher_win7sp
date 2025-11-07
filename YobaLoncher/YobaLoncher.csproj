@@ -130,6 +130,9 @@
     <Compile Include="SettingsDialog.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="WebModInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="YobaDialog.cs">
       <SubType>Form</SubType>
     </Compile>

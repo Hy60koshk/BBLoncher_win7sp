@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.IO;
 using System.Drawing;
 using CommonOpenFileDialog = Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog;
 using CommonFileDialogResult = Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult;
-using System.Diagnostics;
+using System.Net.Sockets;
 
 namespace YobaLoncher {
 	partial class MainForm {
@@ -159,15 +158,16 @@ namespace YobaLoncher {
 			private List<WebModInfo> modList_;
 
 			internal List<WebModInfo> ModList {
-				get {
-					modList_ = new List<WebModInfo>();
-					for (int i = 0; i < Program.LoncherSettings.Mods.Count; i++) {
-						ModInfo mod = Program.LoncherSettings.Mods[i];
-						if (mod.FilesForLatestVersion != null) {
-							modList_.Add(new WebModInfo(mod));
-						}
+				get => modList_;
+			}
+
+			internal void UpdateModList() {
+				List<ModInfo> allMods = Program.LoncherSettings.Mods;
+				modList_ = new List<WebModInfo>();
+				foreach (ModInfo mod in allMods) {
+					if (mod.FilesForCurrentVersion != null || mod.FilesForLatestVersion != null) {
+						modList_.Add(new WebModInfo(mod));
 					}
-					return modList_;
 				}
 			}
 
@@ -224,9 +224,32 @@ namespace YobaLoncher {
 				return true;
 			}
 
-			public void ModInstall(string id) {
+			public void ModInstall(string id, string verId) {
 				ModInfo mi = getModInfoById(id);
-				if (mi != null && checkConflicts(mi, "SomeModsConflictWithThisInstall")) {
+				if (mi is null) {
+					YobaDialog.ShowDialog("There's no mod with ID " + id);
+					return;
+				}
+				/*List<Tuple<ModVersion, GameVersion>> versions = new List<Tuple<ModVersion, GameVersion>>();
+				foreach (ModVersion mv in mi.Versions) {
+					GameVersion gv = mv.GetGameVersion();
+					if (gv != null) {
+						versions.Add(new Tuple<ModVersion, GameVersion>(mv, gv));
+					}
+				}
+				if (versions.Count < 1) {
+					YobaDialog.ShowDialog("There's no versions for mod " + id);
+					return;
+				}
+
+				int verIdx = 0;
+				if (versions.Count > 1) {
+
+				}*/
+				
+				//mi.InitCurrentInstallForVersion(versions[verIdx].Item1);
+				mi.InitCurrentInstallForVersion(verId);
+				if (mi.FilesForCurrentVersion != null && checkConflicts(mi, "SomeModsConflictWithThisInstall")) {
 					InstallModAsync(mi);
 				}
 			}
@@ -269,6 +292,7 @@ namespace YobaLoncher {
 						if (Form.modsToUpdate_ is null) {
 							Form.modsToUpdate_ = new LinkedList<ModInfo>();
 							Form.modsToUpdate_.AddLast(mi);
+							mi.MarkedForUpdate = true;
 							mi.DlInProgress = true;
 							Form.UpdateModsWebView();
 							if (!Form.UpdateInProgress_) {
@@ -301,7 +325,7 @@ namespace YobaLoncher {
 					}
 				}
 				string modSize = YU.formatFileSize(size);
-				if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("AreYouSureInstallMod"), mi.Name, modSize), YobaDialog.YesNoBtns)) {
+				if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("AreYouSureInstallMod"), mi.VersionedName, modSize), YobaDialog.YesNoBtns)) {
 					if (Form.modsToUpdate_ is null) {
 						Form.modsToUpdate_ = new LinkedList<ModInfo>();
 						Form.modsToUpdate_.AddLast(mi);

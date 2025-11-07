@@ -21,7 +21,7 @@ if (isset($_GET["test"])) {
 <?php
 	echo $test ? "<script language='JavaScript' src='assets/yobalib_dummy.js' type='text/javascript'></script>" : "<script>;[[[YOBALIB]]];</script>";
 
-	$donate = file_get_contents('links.html');
+	$donate = file_get_contents('donate.html');
 
 	$links = file_get_contents('links.html');
 	$headerContent = "";
@@ -125,7 +125,7 @@ YLExtInit()
 
 	<div class='page' id='DonateView'>
 		<div class="articleContentWrapper">
-			<div class='article-content'></div>
+			<div class='article-content'><?php echo $donate; ?></div>
 		</div>
 	</div>
 
