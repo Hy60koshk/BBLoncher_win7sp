@@ -815,16 +815,6 @@ $(function() {
 					, Label: 'Деньги мне плоти'
 					, Type: 'check'
 				}, {
-					Type: 'list'
-					, Key: 'Conflicts'
-					, Label: 'Конфликтующие моды для версии (по одному ID мода на строку)'
-					, Width: '550px'
-				}, {
-					Type: 'listoflists'
-					, Key: 'Dependencies'
-					, Label: 'Зависимости от модов для версии (по одной зависимости на строку, взаимозаменяемые ставятся на одной строке через палку | )'
-					, Width: '550px'
-				}, {
 					Type: 'spawner'
 					, Key: 'FileGroups'
 					, Class: 'groupedFilesForVersion'
@@ -886,6 +876,68 @@ $(function() {
 					, Key: 'Files'
 					, Label: 'Файлы в группе'
 					, SpawnData: getFileInfoObj()
+				}
+			]
+		}
+	}
+	
+	function getModVersionObj() {
+		return {
+			Label: 'Версия мода'
+			, Class: 'modversion'
+			, Fields: [
+				{
+					Key: 'VersionName'
+					, Label: 'Номер версии: '
+					, Width: '120px'
+				}, {
+					Key: 'VersionOrder'
+					, Label: 'Порядковый номер версии (больше = новее): '
+					, ValType: 'int'
+					, Width: '60px'
+				}, {
+					Key: 'Description'
+					, Label: 'Альт. описание мода: '
+					, Width: '90%'
+				}, {
+					Key: 'DetailedDescription'
+					, TextArea: true
+					, Label: 'Подробное описание мода (для версии), можно использовать bb-код: '
+					, Width: '550px'
+					, Height: '80px'
+				}, {
+					Type: 'list'
+					, Key: 'Conflicts'
+					, Label: 'Конфликтующие моды (по одному ID мода на строку)'
+					, Width: '550px'
+				}, {
+					Type: 'listoflists'
+					, Key: 'Dependencies'
+					, Label: 'Зависимости от модов (по одной зависимости на строку, взаимозаменяемые ставятся на одной строке через палку | )'
+					, Width: '550px'
+				}, {
+					Type: 'spawner'
+					, Key: 'GameVersions'
+					, Label: 'Файлы для версий игры'
+					, SpawnData: getGameVersionObj(true)
+				}
+			]
+		}
+	}
+
+	function getModMigrationObj() {
+		return {
+			Label: 'Изменение ID мода'
+			, Class: 'modMigration'
+			, Fields: [
+				{
+					Key: 'OldId'
+					, Label: 'Старый ID: '
+					, Width: '200px'
+				}, {
+					Key: 'NewId'
+					, Label: 'Новый ID: '
+					, Width: '200px'
 				}
 			]
 		}
@@ -1149,7 +1201,7 @@ $(function() {
 					}
 				]
 			}, {
-				Type: 'field'
+			/*	Type: 'field'
 				, Key: 'LoncherExe'
 				, Label: '[УСТАР] Ссылка на исполняемый файл лаунчера: '
 				, Width: '500px'
@@ -1158,7 +1210,7 @@ $(function() {
 				, Key: 'LoncherHash'
 				, Label: '[УСТАР] MD5 лаунчера: '
 				, Width: '500px'
-			}, {
+			}, {*/
 				Type: 'field'
 				, Key: 'Changelog'
 				, Label: 'Ссылка на файл ченжлога: '
@@ -1169,7 +1221,7 @@ $(function() {
 				, Label: 'Ссылка на файл FAQ: '
 				, Width: '500px'
 			}, {
-				Type: 'field'
+			/*	Type: 'field'
 				, Key: 'ChangelogEscape'
 				, Label: 'Символ внешних ковычек ченжлога (устар.): '
 				, Title: 'Символ, в какие кавычки берётся Changelog при всосывании в ChangelogTemplate (т.е. которыми обрамлён [[[CHANGELOG]]] в самом ChangelogTemplate).'
@@ -1180,7 +1232,7 @@ $(function() {
 				, Label: 'Символ внешних ковычек в файлах: '
 				, Title: 'Символ, в какие кавычки берётся Changelog при всовывании в ChangelogTemplate (т.е. которыми обрамлён [[[CHANGELOG]]] в самом ChangelogTemplate).'
 				, Width: '40px'
-			}, {
+			}, {*/
 				Type: 'select'
 				, Key: 'StartPage'
 				, Label: 'Открывать при старте: '
@@ -1265,6 +1317,13 @@ $(function() {
 			}
 			, {
 				Type: 'spawner'
+				, Key: 'ModMigrate'
+				, Class: 'modSpawner'
+				, Label: 'Миграция модов (изменился ID)'
+				, SpawnData: getModMigrationObj()
+			}
+			, {
+				Type: 'spawner'
 				, Key: 'Mods'
 				, Class: 'modSpawner'
 				, Label: 'Моды'
@@ -1294,6 +1353,10 @@ $(function() {
 							Key: 'IsHidden'
 							, Type: 'check'
 							, Label: 'Скрытый (разрабческий)'
+						}, {
+							Key: 'HasExecutable'
+							, Type: 'check'
+							, Label: 'Имеет исполняемый файл'
 						}, {
 							Type: 'list'
 							, Key: 'Conflicts'
@@ -1325,7 +1388,7 @@ $(function() {
 							Type: 'spawner'
 							, Key: 'GameVersions'
 							, Label: 'Версии игры для мода'
-							, SpawnData: getGameVersionObj(true)
+							, SpawnData: getModVersionObj()
 						}
 					]
 				}
