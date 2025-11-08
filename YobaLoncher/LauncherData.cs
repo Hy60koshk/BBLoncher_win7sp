@@ -292,6 +292,7 @@ namespace YobaLoncher {
 		public List<string> ModFilesInUse = new List<string>();
 		public List<string> ModFilesToDelete = new List<string>();
 		public Dictionary<string, FileInfo> ExistingModFiles = new Dictionary<string, FileInfo>();
+		public List<ModMigration> ModMigrations;
 
 		public UninstallationRules UninstallationRules;
 
@@ -306,6 +307,7 @@ namespace YobaLoncher {
 			public string SteamGameFolder;
 			public List<MainGameVersion> GameVersions;
 			public List<ModGroup> ModGroups;
+			public List<ModMigration> ModMigrations;
 			public List<RawModInfo> Mods;
 			public BgImageInfo Background;
 			public FileInfo PreloaderBackground;
@@ -351,6 +353,8 @@ namespace YobaLoncher {
 			LoncherLinkName = raw.LoncherLinkName ?? "YobaLöncher";
 
 			UninstallationRules = raw.UninstallationRules ?? new UninstallationRules();
+
+			ModMigrations = raw.ModMigrations;
 
 			GameVersions = PrepareGameVersions(raw.GameVersions);
 			if (raw.Mods != null && raw.Mods.Count > 0) {
@@ -772,6 +776,11 @@ namespace YobaLoncher {
 		}
 	}
 
+	public class ModMigration {
+		public string OldId;
+		public string NewId;
+	}
+
 	public class ModInfo {
 		public string Id;
 		public string Name;
@@ -935,6 +944,16 @@ namespace YobaLoncher {
 
 		public void InitCurrentVersion(MainGameVersion gv, string curVer) {
 			ModConfigurationInfo = LauncherConfig.InstalledMods.Find(x => x.Id == null ? x.Name.Equals(Name) : x.Id.Equals(Id));
+			if (ModConfigurationInfo is null) {
+				List<ModMigration> transitedVariants = Program.LoncherSettings.ModMigrations.FindAll(x => x.NewId.Equals(Id));
+				for (int i = 0; i < transitedVariants.Count && ModConfigurationInfo is null; i++) {
+					string oldId = transitedVariants[i].OldId;
+					ModConfigurationInfo = LauncherConfig.InstalledMods.Find(x => x.Id != null && x.Id.Equals(oldId));
+				}
+				if (ModConfigurationInfo != null) {
+					ModConfigurationInfo.Id = Id;
+				}
+			}
 			LatestVersion = null;
 			GVForLatestVersion = null;
 			FilesForLatestVersion = null;
