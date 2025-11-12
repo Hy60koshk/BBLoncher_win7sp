@@ -131,7 +131,7 @@ namespace YobaLoncher {
 			
 			uint outdatedmodssize = 0;
 			if (mi.LatestVersion != mi.CurrentVersion) {
-				foreach (FileInfo mif in mi.FilesForLatestVersion) {
+				foreach (FileInfo mif in mi.LatestVersion.Files) {
 					mif.IsOK = FileChecker.CheckFileMD5(mif);
 					if (!mif.IsOK) {
 						outdatedmodssize += mif.Size;
@@ -139,7 +139,7 @@ namespace YobaLoncher {
 				}
 			}
 			else {
-				foreach (FileInfo mif in mi.FilesForCurrentVersion) {
+				foreach (FileInfo mif in mi.CurrentVersion.Files) {
 					if (!mif.IsOK) {
 						outdatedmodssize += mif.Size;
 					}
@@ -185,13 +185,13 @@ namespace YobaLoncher {
 					if (mi.LatestVersion != mi.CurrentVersion) {
 						outdatedMods.AddLast(mi);
 						mi.IsUpdateAvailable = true;
-						foreach (FileInfo mif in mi.FilesForLatestVersion) {
+						foreach (FileInfo mif in mi.LatestVersion.Files) {
 							mif.IsOK = FileChecker.CheckFileMD5(mif);
 							if (!mif.IsOK) {
 								outdatedModsSize += mif.Size;
 							}
 						}
-						foreach (FileInfo mif in mi.FilesForCurrentVersion) {
+						foreach (FileInfo mif in mi.CurrentVersion.Files) {
 							mif.IsOK = FileChecker.CheckFileMD5(mif);
 							if (!mif.IsOK) {
 								brokenModsSize += mif.Size;
@@ -206,7 +206,7 @@ namespace YobaLoncher {
 						}
 					}
 					else {
-						foreach (FileInfo mif in mi.FilesForLatestVersion) {
+						foreach (FileInfo mif in mi.LatestVersion.Files) {
 							if (!mif.IsOK) {
 								brokenModsSize += mif.Size;
 								if (!hasIt) {
@@ -223,7 +223,7 @@ namespace YobaLoncher {
 				}
 				else {
 					bool modIsIntact = true;
-					foreach (FileInfo fi in mi.FilesForLatestVersion) {
+					foreach (FileInfo fi in mi.LatestVersion.Files) {
 						if (!fi.IsOK) {
 							modIsIntact = false;
 							break;
@@ -353,47 +353,65 @@ namespace YobaLoncher {
 			foreach (ModInfo mi in availableMods) {
 				if (mi.IsActive) {
 					if (mi.Dependencies != null && mi.Dependencies.Count > 0) {
-						foreach (string[] deps in mi.Dependencies) {
-							if (deps != null && deps.Length > 0) {
-								bool hasDeps = false;
-								List<string> availDeps = new List<string>();
-								foreach (string dep in deps) {
-									ModInfo depmi = availableMods.Find(x => x.Id.Equals(dep));
-									if (depmi != null) {
-										if (depmi.IsActive) {
-											hasDeps = true;
-											break;
-										}
-										else {
-											availDeps.Add(depmi.VersionedName);
-										}
-									}
+						foreach (ModDep[] deps in mi.Dependencies) {
+							bool depFulfilled = false;
+							List<string> availDeps = new List<string>();
+							foreach (ModDep dep in deps) {
+								ModInfo depmi;
+								if (dep.VerId is null) {
+									depmi = availableMods.Find(x => x.Id.Equals(dep));
 								}
-								if (!hasDeps) {
-									if (availDeps.Count > 1) {
-										YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependencies"), mi.VersionedName, string.Join("\r\n", availDeps)));
-									}
-									else if (availDeps.Count > 0) {
-										YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependency"), mi.VersionedName, availDeps[0]));
+								else {
+									depmi = availableMods.Find(x =>
+										x.Id.Equals(dep)
+										&& null != x.Versions.Find(v => v.VersionName.Equals(dep.VerId, StringComparison.OrdinalIgnoreCase))
+									);
+								}
+								if (depmi != null) {
+									if (depmi.IsActive) {
+										depFulfilled = true;
+										break;
 									}
 									else {
-										YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependenciesButNoneAvailable"), mi.VersionedName));
+										availDeps.Add(depmi.VersionedName);
 									}
-									return false;
 								}
+							}
+							if (!depFulfilled) {
+								if (availDeps.Count > 1) {
+									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependencies"), mi.VersionedName, string.Join("\r\n", availDeps)));
+								}
+								else if (availDeps.Count > 0) {
+									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependency"), mi.VersionedName, availDeps[0]));
+								}
+								else {
+									YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasDependenciesButNoneAvailable"), mi.VersionedName));
+								}
+								return false;
 							}
 						}
 					}
 					if (mi.Conflicts != null && mi.Conflicts.Count > 0) {
+						List<ModInfo> activeMods = availableMods.Where(m => m.IsActive).ToList();
 						List<string> activeConflicts = new List<string>();
-						foreach (string conflict in mi.Conflicts) {
-							ModInfo conmi = availableMods.Find(x => x.Id.Equals(conflict));
-							if (conmi != null && conmi.IsActive) {
+						foreach (ModDep conflict in mi.Conflicts) {
+							ModInfo conmi;
+							if (conflict.VerId is null) {
+								conmi = activeMods.Find(x => x.Id.Equals(conflict));
+							}
+							else {
+								conmi = activeMods.Find(x =>
+									x.Id.Equals(conflict)
+									&& x.CurrentVersion.VersionName.Equals(conflict.VerId, StringComparison.OrdinalIgnoreCase)
+								);
+							}
+							if (conmi != null) {
 								activeConflicts.Add(conmi.VersionedName);
 							}
 						}
 						if (activeConflicts.Count > 0) {
-							YobaDialog.ShowDialog(String.Format(Locale.Get("ModHasConflicts"), mi.VersionedName, string.Join("\r\n", activeConflicts)));
+							string locKey = activeConflicts.Count > 1 ? "ModHasConflicts" : "ModHasConflict";
+							YobaDialog.ShowDialog(String.Format(Locale.Get(locKey), mi.VersionedName, string.Join("\r\n", activeConflicts)));
 							return false;
 						}
 					}

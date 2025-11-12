@@ -140,6 +140,7 @@ namespace YobaLoncher {
 			, { "AreYouSureUninstallMod", "Are you sure you want to uninstall {0}?" }
 			, { "SomeModsDependOnThisDelete", "Are you sure you want to delete this mod? These mods depend on it:\r\n{0}" }
 			, { "SomeModsDependOnThisDisable", "Are you sure you want to disable this mod? These mods depend on it:\r\n{0}" }
+			, { "ModHasConflict", "{0} Mod conflicts with the following mod:\r\n{1}" }
 			, { "ModHasConflicts", "{0} Mod conflicts with the following mods:\r\n{1}" }
 			, { "ModHasDependency", "{0} Mod has dependencies. Please, activate the following mod: {1}" }
 			, { "ModHasDependencies", "{0} Mod has dependencies. Please, activate one of the following mods:\r\n{1}" }

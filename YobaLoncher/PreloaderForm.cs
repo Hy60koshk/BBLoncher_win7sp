@@ -202,7 +202,7 @@ namespace YobaLoncher {
 		internal async Task<LauncherData.StaticTabData> getMainPageData() {
 			LauncherData.StaticTabData staticTabData = new LauncherData.StaticTabData();
 			try {
-				if (Program.LoncherSettings.UIStyle.TryGetValue("MainPage", out FileInfo staticPageFileInfo)) {
+				if (Program.LoncherSettings.UIStyle.TryGetValue("MainPageFix", out FileInfo staticPageFileInfo)) {
 					if (await assertFile(staticPageFileInfo, Program.LoncherDataPath)) {
 						writeMainPageData(staticPageFileInfo, staticTabData);
 					}
@@ -217,7 +217,7 @@ namespace YobaLoncher {
 		internal LauncherData.StaticTabData getMainPageDataOffline() {
 			LauncherData.StaticTabData staticTabData = new LauncherData.StaticTabData();
 			try {
-				if (Program.LoncherSettings.UIStyle.TryGetValue("MainPage", out FileInfo staticPageFileInfo)) {
+				if (Program.LoncherSettings.UIStyle.TryGetValue("MainPageFix", out FileInfo staticPageFileInfo)) {
 					if (assertOfflineFile(staticPageFileInfo, Program.LoncherDataPath)) {
 						writeMainPageData(staticPageFileInfo, staticTabData);
 					}
@@ -320,7 +320,7 @@ namespace YobaLoncher {
 
 			Program.ModsDisabledPath = Program.GamePath + "_loncher_disabled_mods\\"
 				+ string.Join("_", curVer.Split(Path.GetInvalidFileNameChars())) + '\\';
-			Program.LoncherSettings.LoadFileListForVersion(curVer);
+			Program.LoncherSettings.InitForVersion(curVer);
 			LauncherConfig.SaveMods();
 		}
 

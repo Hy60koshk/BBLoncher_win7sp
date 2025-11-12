@@ -9,11 +9,91 @@ namespace YobaLoncher {
 			public string Id;
 			public string Name;
 			public string Description;
+			public List<string> Conflicts = new List<string>();
+			public List<string[]> Dependencies = new List<string[]>();
+			public List<string> ActiveConflicts = new List<string>();
+			public List<bool> DepsFulfilled = new List<bool>();
 
-			public WebModVersion(ModInfo mi, ModVersion mv, GameVersion gv) {
+			public WebModVersion(ModInfo mi, ModVersion mv) {
 				Id = mv.VersionName;
-				Name = gv.Name ?? (mi.Name + ' ' + mv.VersionName);
-				Description = gv.Description ?? mv.Description ?? "";
+				Name = mi.Name + ' ' + mv.VersionName;
+				Description = mv.Description ?? "";
+
+				List<ModInfo> availableMods = Program.LoncherSettings.AvailableMods;
+
+				List<ModDep> conflicts = null;
+				if (mv.Conflicts != null) {
+					if (!mv.Conflicts[0].ModId.Equals("-")) {
+						conflicts = mv.Conflicts;
+					}
+				}
+				else if (mi.Conflicts != null) {
+					conflicts = mi.Conflicts;
+				}
+				if (conflicts != null) {
+					foreach (ModDep conf in conflicts) {
+						ModInfo cmi = availableMods.Find(m => m.Id.Equals(conf.ModId));
+						if (cmi != null) {
+							if (conf.VerId is null) {
+								Conflicts.Add(cmi.VersionedName);
+								if (cmi.IsActive) {
+									ActiveConflicts.Add(cmi.VersionedName);
+								}
+							}
+							else {
+								ModVersion cmv = cmi.Versions.Find(
+									v => v.VersionName.Equals(conf.VerId, System.StringComparison.OrdinalIgnoreCase)
+								);
+								if (cmv != null) {
+									Conflicts.Add(cmi.Name + ' ' + cmv.VersionName);
+									if (cmi.IsActive && cmv == cmi.CurrentVersion) {
+										ActiveConflicts.Add(cmi.VersionedName);
+									}
+								}
+							}
+						}
+					}
+				}
+
+				List<ModDep[]> dependencies = null;
+				if (mv.Dependencies != null) {
+					if (!mv.Dependencies[0][0].ModId.Equals("-")) {
+						dependencies = mv.Dependencies;
+					}
+				}
+				else if (mi.Dependencies != null) {
+					dependencies = mi.Dependencies;
+				}
+				if (dependencies != null) {
+					foreach (ModDep[] depVariants in dependencies) {
+						List<string> depsTitles = new List<string>();
+						bool isFulfilled = false;
+						foreach (ModDep variant in depVariants) {
+							ModInfo cmi = availableMods.Find(m => m.Id.Equals(variant.ModId));
+							if (cmi != null) {
+								if (variant.VerId is null) {
+									depsTitles.Add(cmi.VersionedName);
+									if (cmi.IsActive) {
+										isFulfilled = true;
+									}
+								}
+								else {
+									ModVersion cmv = cmi.Versions.Find(
+										v => v.VersionName.Equals(variant.VerId, System.StringComparison.OrdinalIgnoreCase)
+									);
+									if (cmv != null) {
+										depsTitles.Add(cmi.Name + ' ' + cmv.VersionName);
+										if (cmi.IsActive && cmi.CurrentVersion == cmv) {
+											isFulfilled = true;
+										}
+									}
+								}
+							}
+						}
+						Dependencies.Add(depsTitles.ToArray());
+						DepsFulfilled.Add(isFulfilled);
+					}
+				}
 			}
 		}
         internal class WebModInfo {
@@ -41,7 +121,7 @@ namespace YobaLoncher {
 				//GroupId = mi.GroupId;
 				Id = mi.Id;
 				IsHidden = mi.IsHidden;
-				NeedsDonation = mi.GVForLatestVersion.NeedsDonation;
+				NeedsDonation = mi.LatestVersion.NeedsDonation;
 				Description = mi.VersionedDescription;
 				DetailedDescription = mi.VersionedDetailedDescription ?? mi.DetailedDescription ?? "";
 				Screenshots = (mi.Screenshots == null) ? "" : JsonConvert.SerializeObject(mi.Screenshots);
@@ -54,35 +134,8 @@ namespace YobaLoncher {
 
 				Versions = new List<WebModVersion>();
 				foreach (ModVersion mv in mi.Versions) {
-					GameVersion gv = mv.GetGameVersion();
-					if (gv != null && (gv.Files.Count + gv.FileGroups.Count) > 0) {
-						Versions.Add(new WebModVersion(mi, mv, gv));
-					}
-				}
-
-				if (mi.ConflictList.Count > 0) {
-					foreach (ModInfo cmi in mi.ConflictList) {
-						if (cmi.IsActive) {
-							Conflicts.Add(cmi.VersionedName);
-						}
-					}
-				}
-				if (mi.DependencyList.Count > 0) {
-					foreach (List<ModInfo> deps in mi.DependencyList) {
-						string[] modDeps = new string[deps.Count];
-						bool addDeps = true;
-						for (int i = 0; i < deps.Count; i++) {
-							if (deps[i].IsActive) {
-								addDeps = false;
-								break;
-							}
-							else {
-								modDeps[i] = deps[i].VersionedName;
-							}
-						}
-						if (addDeps) {
-							Dependencies.Add(modDeps);
-						}
+					if (mv.HasVersion()) {
+						Versions.Add(new WebModVersion(mi, mv));
 					}
 				}
 			}

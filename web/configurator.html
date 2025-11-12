@@ -796,58 +796,27 @@ $(function() {
 		};
 	}
 
-	function getGameVersionObj(isModGV) {
-		var fields = isModGV ? [
-				{
-					Key: 'ExeVersion'
-					, Label: 'Версия игры: '
-					, Width: '250px'
-				}, {
-					Key: 'Name'
-					, Label: 'Альт. название мода: '
-					, Width: '400px'
-				}, {
-					Key: 'Description'
-					, Label: 'Альт. описание мода: '
-					, Width: '90%'
-				}, {
-					Key: 'NeedsDonation'
-					, Label: 'Деньги мне плоти'
-					, Type: 'check'
-				}, {
-					Type: 'spawner'
-					, Key: 'FileGroups'
-					, Class: 'groupedFilesForVersion'
-					, Label: 'Группы файлов для версии'
-					, SpawnData: getFileGroupObj()
-				}, {
-					Type: 'spawner'
-					, Key: 'Files'
-					, Class: 'singleFilesForVersion'
-					, Label: 'Отдельные файлы для версии'
-					, SpawnData: getFileInfoObj()
-				}
-			] : [
-				{
-					Key: 'ExeVersion'
-					, Label: 'Версия игры: '
-					, Width: '250px'
-				}, {
-					Type: 'spawner'
-					, Key: 'FileGroups'
-					, Label: 'Группы файлов для версии'
-					, SpawnData: getFileGroupObj()
-				}, {
-					Type: 'spawner'
-					, Key: 'Files'
-					, Label: 'Отдельные файлы для версии'
-					, SpawnData: getFileInfoObj()
-				}
-			];
+	function getGameVersionObj() {
 		return {
 			Label: 'Версия игры'
 			, Class: 'gameversion'
-			, Fields: fields
+			, Fields: [
+				{
+					Key: 'ExeVersion'
+					, Label: 'Версия игры: '
+					, Width: '250px'
+				}, {
+					Type: 'spawner'
+					, Key: 'FileGroups'
+					, Label: 'Группы файлов для версии'
+					, SpawnData: getFileGroupObj()
+				}, {
+					Type: 'spawner'
+					, Key: 'Files'
+					, Label: 'Отдельные файлы для версии'
+					, SpawnData: getFileInfoObj()
+				}
+			]
 		}
 	}
 
@@ -889,12 +858,20 @@ $(function() {
 				{
 					Key: 'VersionName'
 					, Label: 'Номер версии: '
-					, Width: '120px'
+					, Width: '220px'
 				}, {
 					Key: 'VersionOrder'
 					, Label: 'Порядковый номер версии (больше = новее): '
 					, ValType: 'int'
 					, Width: '60px'
+				}, {
+					Key: 'ExeVersion'
+					, Label: 'Версии игры (через запятую, если все - то ANY): '
+					, Width: '250px'
+				}, {
+					Key: 'NeedsDonation'
+					, Label: 'Деньги мне плоти'
+					, Type: 'check'
 				}, {
 					Key: 'Description'
 					, Label: 'Альт. описание мода: '
@@ -908,18 +885,18 @@ $(function() {
 				}, {
 					Type: 'list'
 					, Key: 'Conflicts'
-					, Label: 'Конфликтующие моды (по одному ID мода на строку)'
+					, Label: 'Конфликтующие моды (по одному ID мода на строку, можно указать конкретную версию через @)'
 					, Width: '550px'
 				}, {
 					Type: 'listoflists'
 					, Key: 'Dependencies'
-					, Label: 'Зависимости от модов (по одной зависимости на строку, взаимозаменяемые ставятся на одной строке через палку | )'
+					, Label: 'Зависимости от модов (по одной зависимости на строку, взаимозаменяемые ставятся на одной строке через палку | , можно указать конкретную версию через @)'
 					, Width: '550px'
 				}, {
 					Type: 'spawner'
-					, Key: 'GameVersions'
-					, Label: 'Файлы для версий игры'
-					, SpawnData: getGameVersionObj(true)
+					, Key: 'Files'
+					, Label: 'Файлы для версии'
+					, SpawnData: getFileInfoObj()
 				}
 			]
 		}
@@ -1249,6 +1226,7 @@ $(function() {
 				, Label: 'Шаблоны и стили экранов'
 				, Fields: [
 					getFileInfoObj('MainPage', 'Главная, мать её, страница')
+					, getFileInfoObj('MainPageFix', 'Главная страница (новая)')
 					, getFileInfoObj('Changelog', 'Шаблон ченжлога')
 					, getFileInfoObj('FAQ', 'Шаблон FAQ')
 					, getFileInfoObj('TemplateLib', 'Общий код для head шаблонов', 'Вставляется в тег head экранов статуса, FAQ, ченджлога и модов. В случае с faq и ченджлогом - если для них используется сырой html, а не url')

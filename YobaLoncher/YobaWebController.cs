@@ -7,7 +7,7 @@ using System.IO;
 using System.Drawing;
 using CommonOpenFileDialog = Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog;
 using CommonFileDialogResult = Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult;
-using System.Net.Sockets;
+using System.Linq;
 
 namespace YobaLoncher {
 	partial class MainForm {
@@ -162,13 +162,7 @@ namespace YobaLoncher {
 			}
 
 			internal void UpdateModList() {
-				List<ModInfo> allMods = Program.LoncherSettings.Mods;
-				modList_ = new List<WebModInfo>();
-				foreach (ModInfo mod in allMods) {
-					if (mod.FilesForCurrentVersion != null || mod.FilesForLatestVersion != null) {
-						modList_.Add(new WebModInfo(mod));
-					}
-				}
+				modList_ = Program.LoncherSettings.AvailableMods.Select(mod => new WebModInfo(mod)).ToList();
 			}
 
 			private ModInfo getModInfoById(string id) {
@@ -248,8 +242,8 @@ namespace YobaLoncher {
 				}*/
 				
 				//mi.InitCurrentInstallForVersion(versions[verIdx].Item1);
-				mi.InitCurrentInstallForVersion(verId);
-				if (mi.FilesForCurrentVersion != null && checkConflicts(mi, "SomeModsConflictWithThisInstall")) {
+				mi.InitInstallForVersion(verId);
+				if (mi.CurrentVersion != null && checkConflicts(mi, "SomeModsConflictWithThisInstall")) {
 					InstallModAsync(mi);
 				}
 			}
@@ -316,10 +310,10 @@ namespace YobaLoncher {
 
 			internal async void InstallModAsync(ModInfo mi) {
 				uint size = 0;
-				if (mi.FilesForLatestVersion[0].Size == 0) {
-					await FileChecker.CheckFiles(mi.FilesForLatestVersion);
+				if (mi.LatestVersion.Files[0].Size == 0) {
+					await FileChecker.CheckFiles(mi.LatestVersion.Files);
 				}
-				foreach (FileInfo fi in mi.FilesForLatestVersion) {
+				foreach (FileInfo fi in mi.LatestVersion.Files) {
 					if (!fi.IsOK) {
 						size += fi.Size;
 					}
