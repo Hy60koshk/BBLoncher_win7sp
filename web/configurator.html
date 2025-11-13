@@ -1301,8 +1301,14 @@ $(function() {
 				, SpawnData: getModMigrationObj()
 			}
 			, {
-				Type: 'spawner'
+				Type: 'list'
 				, Key: 'Mods'
+				, Label: '*это не трогаем*'
+				, Width: '10px'
+			}
+			, {
+				Type: 'spawner'
+				, Key: 'Mods2'
 				, Class: 'modSpawner'
 				, Label: 'Моды'
 				, SpawnData: {

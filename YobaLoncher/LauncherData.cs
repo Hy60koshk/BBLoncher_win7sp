@@ -7,8 +7,6 @@ using System.Net;
 using Newtonsoft.Json;
 using System.Windows.Forms;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
-using MS.WindowsAPICodePack.Internal;
 
 namespace YobaLoncher {
 	public enum StartPageEnum {
@@ -309,7 +307,7 @@ namespace YobaLoncher {
 			public List<MainGameVersion> GameVersions;
 			public List<ModGroup> ModGroups;
 			public List<ModMigration> ModMigrations;
-			public List<RawModInfo> Mods;
+			public List<RawModInfo> Mods2;
 			public BgImageInfo Background;
 			public FileInfo PreloaderBackground;
 			public FileInfo Localization;
@@ -347,29 +345,13 @@ namespace YobaLoncher {
 			GogID = raw.GogID;
 			Survey = raw.Survey;
 
-			ModGroups = raw.ModGroups;
-
 			GameName = raw.GameName;
 			SteamGameFolder = raw.SteamGameFolder;
 			LoncherLinkName = raw.LoncherLinkName ?? "YobaLöncher";
 
 			UninstallationRules = raw.UninstallationRules ?? new UninstallationRules();
 
-			ModMigrations = raw.ModMigrations;
-
 			GameVersions = PrepareGameVersions(raw.GameVersions);
-			if (raw.Mods != null && raw.Mods.Count > 0) {
-				foreach (RawModInfo rmi in raw.Mods) {
-					if (YU.stringHasText(rmi.Name) && rmi.Versions != null) {
-						if (rmi.Versions.Count > 0) {
-							ModInfo mi = new ModInfo(rmi, ModGroups);
-							if (mi.Versions.Count > 0) {
-								Mods.Add(mi);
-							}
-						}
-					}
-				}
-			}
 		}
 
 		public static Dictionary<string, T> PrepareGameVersions<T>(List<T> rawGameVersions) where T : IGameVersion, new() {
@@ -413,6 +395,21 @@ namespace YobaLoncher {
 		}
 
 		public void InitForVersion(string curVer) {
+			ModGroups = raw_.ModGroups;
+			ModMigrations = raw_.ModMigrations;
+			if (raw_.Mods2 != null && raw_.Mods2.Count > 0) {
+				foreach (RawModInfo rmi in raw_.Mods2) {
+					if (YU.stringHasText(rmi.Name) && rmi.Versions != null) {
+						if (rmi.Versions.Count > 0) {
+							ModInfo mi = new ModInfo(rmi, ModGroups);
+							if (mi.Versions.Count > 0) {
+								Mods.Add(mi);
+							}
+						}
+					}
+				}
+			}
+
 			if (YU.stringHasText(curVer)) {
 				if (GameVersions.ContainsKey(curVer)) {
 					GameVersion = GameVersions[curVer];
