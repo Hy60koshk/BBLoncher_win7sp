@@ -170,7 +170,7 @@ namespace YobaLoncher {
 					return true;
 				}
 				string strHash = GetFileMD5(path);
-				if (correctHash.ToUpper().Equals(strHash)) {
+				if (correctHash.Equals(strHash, StringComparison.OrdinalIgnoreCase)) {
 					return true;
 				}
 			}

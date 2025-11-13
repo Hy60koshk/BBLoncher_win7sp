@@ -886,7 +886,8 @@ $(function() {
 
 function YLExtInit() {
 	mainLocale = YL.GetLocs(
-		'LaunchBtn, UpdateBtn, Close, Minimize, Help, About, ChangelogBtn, LinksBtn, DonateBtn, StatusBtn, SettingsBtn, FAQBtn, ModsBtn'
+		'No, Yes, OK, Done, LaunchBtn, UpdateBtn, Close, Minimize, Help, About'
+		+ ', ChangelogBtn, LinksBtn, DonateBtn, StatusBtn, SettingsBtn, FAQBtn, ModsBtn'
 		+ ', ChangelogTooltip, StatusTooltip, LinksTooltip, DonateTooltip, SettingsTooltip, ModsTooltip, FAQTooltip'
 	);
 
@@ -894,7 +895,7 @@ function YLExtInit() {
 		'ModInstallationInProgress, InstallMod, EnableMod, DisableMod, UninstallMod, NeedsDonationMod'
 		+ ', NoModsForThisVersion, ModDetailedInfo, ModConflictsHintTitle, ModConflictsHintTextSingle'
 		+ ', ModConflictsHintTextPlural, ModDependenciesHintTitle, ModDependenciesHintTextSingle'
-		+ ', ModDependenciesHintTextPlural, ModDependenciesHintOR, ModNotesHintTitle'
+		+ ', ModDependenciesHintTextPlural, ModDependenciesHintOR, ModNotesHintTitle, ModDependenciesHintForVersion'
 	);
 
 	statusLocale = YL.GetLocs(
@@ -1059,18 +1060,101 @@ function YLExtInit() {
 					if (modInfo.ImportantNotes) {
 						addModWarning('notesWarning', modWarnings$, modsLocale["ModNotesHintTitle"], modInfo.ImportantNotes)
 					}
-					if (modInfo.Conflicts && modInfo.Conflicts.length) {
-						var conflictText = modsLocale[modInfo.Conflicts.length > 1 ? "ModConflictsHintTextPlural" : "ModConflictsHintTextSingle"]
-						addModWarning('conflictWarning', modWarnings$, modsLocale["ModConflictsHintTitle"], conflictText + modInfo.Conflicts.join('[n]'))
+					var versionForCD = null
+					
+					if (modInfo.Versions.length == 1) {
+						versionForCD = modInfo.Versions[0]
 					}
-					if (modInfo.Dependencies && modInfo.Dependencies.length) {
-						var depstr = modsLocale[modInfo.Dependencies.length > 1 ? "ModDependenciesHintTextPlural" : "ModDependenciesHintTextSingle"]
-						var orstr = ' ' + modsLocale["ModDependenciesHintOR"] + ' '
-						var depmodlist = ""
-						for (depi = 0; depi < modInfo.Dependencies.length; depi++) {
-							depmodlist += modInfo.Dependencies[depi].join(orstr) + '[n]'
+					else if (modInfo.Installed) {
+						for (var i = 0; i < modInfo.Versions.length; i++) {
+							var ver = modInfo.Versions[i]
+							if (ver.Id == modInfo.InstalledVersionID) {
+								versionForCD = ver
+								break
+							}
 						}
-						addModWarning('dependencyWarning', modWarnings$, modsLocale["ModDependenciesHintTitle"], depstr + depmodlist)
+					}
+					var badDepColor = modInfo.Installed ? '[color=#FF5249]' : '[color=#FFF0EC]'
+					
+					var depOrStr = ' ' + modsLocale["ModDependenciesHintOR"] + ' '
+					if (versionForCD) {
+						if (versionForCD.ActiveConflicts && versionForCD.ActiveConflicts.length) {
+							var conflicts = versionForCD.ActiveConflicts
+							var conflictText = modsLocale[conflicts.length > 1 ? "ModConflictsHintTextPlural" : "ModConflictsHintTextSingle"]
+							addModWarning('conflictWarning', modWarnings$, modsLocale["ModConflictsHintTitle"], conflictText + conflicts.join('[n]'))
+						}
+						if (versionForCD.DepsFulfilled && versionForCD.DepsFulfilled.length) {
+							var allDepsFulfilled = true
+							var depsArr = []
+							var depstr = null
+							for (var i = 0; i < versionForCD.DepsFulfilled.length; i++) {
+								var deps = versionForCD.Dependencies[i].join(depOrStr)
+								if (versionForCD.DepsFulfilled[i]) {
+									deps = '[color=#95EE6E]' + deps + '[/color]'
+								}
+								else {
+									allDepsFulfilled = false
+									deps = badDepColor + deps + '[/color]'
+								}
+								depsArr.push(deps)
+							}
+							if (depsArr.length == 1) {
+								depstr = '[b]' + modsLocale["ModDependenciesHintTextSingle"] + '[/b][n]' + depsArr[0]
+							}
+							else {
+								depstr = '[b]' + modsLocale["ModDependenciesHintTextPlural"] + '[/b][n]' + depsArr.join('[n]')
+							}
+							addModWarning(
+								'dependencyWarning ' + (allDepsFulfilled ? 'ok' : (modInfo.Active ? 'bad' : ''))
+								, modWarnings$
+								, modsLocale["ModDependenciesHintTitle"]
+								, depstr
+							)
+						}
+					}
+					else {
+						var allDepsFulfilled = true
+						var hasDepsAtAll = false
+						var message = ""
+						
+						for (var i = 0; i < modInfo.Versions.length; i++) {
+							var ver = modInfo.Versions[i]
+							message += '[b]' + modsLocale["ModDependenciesHintForVersion"] + ' ' + ver.Id + '[/b][n]'
+							if (ver.DepsFulfilled && ver.DepsFulfilled.length) {
+								hasDepsAtAll = true
+								var depsArr = []
+								for (var i = 0; i < ver.DepsFulfilled.length; i++) {
+									var deps = ver.Dependencies[i].join(depOrStr)
+									if (ver.DepsFulfilled[i]) {
+										deps = '[color=#95EE6E]' + deps + '[/color]'
+									}
+									else {
+										allDepsFulfilled = false
+										deps = badDepColor + deps + '[/color]'
+									}
+									depsArr.push(deps)
+								}
+								if (depsArr.length == 1) {
+									message += depsArr[0]
+								}
+								else {
+									message = depsArr.join('[n]')
+								}
+							}
+							else {
+								message += '[b]' + mainLocale['No'] + '[/b]'
+							}
+							message += '[n][n]'
+						}
+						
+						if (hasDepsAtAll) {
+							addModWarning(
+								'dependencyWarning ' + (allDepsFulfilled ? 'ok' : '')
+								, modWarnings$
+								, modsLocale["ModDependenciesHintTitle"]
+								, message
+							)
+						}
 					}
 				})(modsData.ModList[i])
 			}

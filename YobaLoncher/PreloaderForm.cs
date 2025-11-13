@@ -449,7 +449,7 @@ namespace YobaLoncher {
 						if (YU.stringHasText(loncherHash)) {
 							string selfHash = FileChecker.GetFileMD5(Application.ExecutablePath);
 
-							if (!loncherHash.ToUpper().Equals(selfHash)) {
+							if (!loncherHash.Equals(selfHash, StringComparison.OrdinalIgnoreCase)) {
 								if (YU.stringHasText(loncherUrl)) {
 									string newLoncherPath = Application.ExecutablePath + ".new";
 									string appname = Application.ExecutablePath;

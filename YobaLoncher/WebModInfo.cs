@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace YobaLoncher {
@@ -108,9 +109,8 @@ namespace YobaLoncher {
 			public string Description;
 			public string DetailedDescription;
 			public string Screenshots;
+			public string InstalledVersionID;
 			public List<WebModVersion> Versions;
-			public List<string> Conflicts = new List<string>();
-			public List<string[]> Dependencies = new List<string[]>();
 			[JsonIgnore]
 			public ModInfo ModInfo;
 
@@ -130,14 +130,10 @@ namespace YobaLoncher {
 				if (mi.ModConfigurationInfo != null) {
 					Installed = true;
 					Active = mi.ModConfigurationInfo.Active;
+					InstalledVersionID = mi.CurrentVersion.VersionName;
 				}
 
-				Versions = new List<WebModVersion>();
-				foreach (ModVersion mv in mi.Versions) {
-					if (mv.HasVersion()) {
-						Versions.Add(new WebModVersion(mi, mv));
-					}
-				}
+				Versions = mi.AvailableVersions.Select(mv => new WebModVersion(mi, mv)).ToList();
 			}
 		}
     }

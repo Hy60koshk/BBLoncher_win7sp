@@ -459,10 +459,26 @@ img.bb-dialog-image {
 }
 
 .modsGroupTitle {
-	background-image: linear-gradient(90deg, transparent, rgba(0,0,0,0.4) 20px, rgba(0,0,0,0.4) 60%, transparent);
-	padding: 10px 30px 11px 5px;
+	/*
+	background-image: url("images/header_accent_l.png"), url("images/header_accent_r.png"), linear-gradient(90deg, transparent, rgba(0,0,0,0.4) 100px, rgba(0,0,0,0.4) calc(100% - 100px), transparent);
+	background-position: 7px 48%, calc(100% - 7px) 48%, center;
+	padding: 11px 100px 12px 100px;
+	color: #F9B42F;
+	*/
+
+	background-image: url("images/group_header_bg.png");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 100% calc(100% - 6px);
+	padding: 15px 40px 16px 40px;
 	line-height: 1;
 	font-size: 16px;
+	font-weight: 600;
+	color: #EAE6E3;
+	text-align: center;
+	text-shadow: 0 0 6px #000000, 1px 1px 2px #000000;
+	/*border-top: 2px solid rgba(210,160,64,0.4);
+	border-bottom: 2px solid rgba(210,160,64,0.4);*/
 }
 
 
@@ -559,11 +575,11 @@ img.bb-dialog-image {
 	background-size: auto 70%;
 	width: 100%;
 	min-height: 88px;
-	border: 0px solid rgba(186,180,160,0.4);
-	border-top-width: 2px;
+	border-bottom: 2px solid rgba(186,180,160,0.4);
 }
-.modEntry:last-child {
-	border-bottom-width: 2px;
+.modEntry:not(.compact):last-child {
+	padding-bottom: 2px;
+	border-bottom: none;
 }
 .modEntry .modTitle {
 	width: 100%;
@@ -584,6 +600,147 @@ img.bb-dialog-image {
     top: 4px;
     right: 146px;
 }
+
+#ModsView .article-content {
+	user-select: none;
+	-ms-user-select: none;
+}
+#ModsView .article-content.compact {
+	padding: 6px 32px 12px 9px;
+}
+#ModsView .article-content.compact .modsGroupTitle {
+	font-size: 15px;
+	text-shadow: 0 0 6px #000000, 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+.modEntry.compact {
+	display: inline-block;
+	width: calc(100% / 2 - 9px);
+	height: 80px;
+	padding: 0px;
+	min-height: 0px;
+	margin: 4px;
+	border: 1px solid #2C2E30;
+	border-radius: 5px;
+	box-shadow: 0 1px 5px #000000;
+	background-color: rgba(0, 0, 0, 0.2);
+	vertical-align: top;
+}
+.modEntry.compact.active {
+	background-color: rgba(100, 64, 24, 0.2);
+}
+.modEntry.compact.inactive {
+	background-color: rgba(50, 44, 40, 0.2);
+}
+body.wide .modEntry.compact {
+	display: inline-block;
+	width: calc(100% / 3 - 9px);
+	margin: 4px;
+}
+.modEntry.compact .modTitle {
+	width: 100%;
+	padding: 6px 58px 3px 6px;
+	font-size: 14px;
+}
+.modEntry.compact .modDesc {
+	font-size: 0px;
+	padding: 0px;
+	position: absolute;
+	top: calc(100% - 30px);
+    left: 4px;
+}
+.modEntry.compact .modControls {
+	position: absolute;
+	right: 0px;
+	top: 41px;
+	width: 80px;
+	text-align: right;
+}
+.modEntry.compact .modWarnings {
+    position: absolute;
+    top: 4px;
+    right: 0px;
+}
+
+.modEntry.compact .modLoadingLabel {
+	width: 100%;
+	margin-top: 7px;
+	line-height: 26px;
+	text-align: center;
+	font-size: 10px;
+	height: 26px;
+}
+
+.modEntry.compact .modControlButton:not(.details) {
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: auto, 100%;
+	font-size: 0;
+	margin-top: 0;
+	margin-right: 4px;
+	width: 35px;
+	height: 33px;
+	display: inline-block;
+	vertical-align: top;
+}
+.modEntry.compact .modControlButton.details {
+	margin: 0;
+}
+.modEntry.compact .modControlButton.install {
+	background-image: url('images/mod_icon_install.png'), url('images/menu_btn_smoll.png');
+}
+.modEntry.compact .modControlButton.needsdonation {
+	background-image: url('images/mod_icon_donate.png'), url('images/menu_btn_smoll.png');
+}
+.modEntry.compact .modControlButton.install:active {
+	background-image: url('images/mod_icon_install.png'), url('images/menu_btn_smoll_d.png');
+}
+.modEntry.compact .modControlButton.needsdonation:active {
+	background-image: url('images/mod_icon_donate.png'), url('images/menu_btn_smoll_d.png');
+}
+.modEntry.compact .modControlButton.install:hover {
+	background-image: url('images/mod_icon_install.png'), url('images/menu_btn_smoll_h.png');
+}
+.modEntry.compact .modControlButton.needsdonation:hover {
+	background-image: url('images/mod_icon_donate.png'), url('images/menu_btn_smoll_h.png');
+}
+
+.modEntry.compact .modControlButton.disable
+, .modEntry.compact .modControlButton.enable
+, .modEntry.compact .modControlButton.uninstall {
+	margin-top: 7px;
+	width: 28px;
+	height: 26px;
+	background-size: 18px, 100%;
+}
+.modEntry.compact .modControlButton.disable {
+	background-image: url('images/mod_icon_enabled.png'), url('images/menu_btn_smoll.png');
+}
+.modEntry.compact .modControlButton.enable {
+	background-image: url('images/mod_icon_disabled.png'), url('images/menu_btn_smoll.png');
+}
+.modEntry.compact .modControlButton.disable:active {
+	background-image: url('images/mod_icon_disable.png'), url('images/menu_btn_smoll_d.png');
+}
+.modEntry.compact .modControlButton.enable:active {
+	background-image: url('images/mod_icon_enable.png'), url('images/menu_btn_smoll_d.png');
+}
+.modEntry.compact .modControlButton.disable:hover {
+	background-image: url('images/mod_icon_disable.png'), url('images/menu_btn_smoll_h.png');
+}
+.modEntry.compact .modControlButton.enable:hover {
+	background-image: url('images/mod_icon_enable.png'), url('images/menu_btn_smoll_h.png');
+}
+
+.modEntry.compact .modControlButton.uninstall {
+	background-image: url('images/mod_icon_uninstall.png'), url('images/menu_btn_smoll.png');
+}
+.modEntry.compact .modControlButton.uninstall:active {
+	background-image: url('images/mod_icon_uninstall.png'), url('images/menu_btn_smoll_d.png');
+}
+.modEntry.compact .modControlButton.uninstall:hover {
+	background-image: url('images/mod_icon_uninstall.png'), url('images/menu_btn_smoll_h.png');
+}
+
 .conflictWarning
 , .dependencyWarning {
     display: inline-block;
@@ -601,11 +758,19 @@ img.bb-dialog-image {
 	margin-top: 1px;
 	margin-bottom: 0px;
 }
-.conflictWarning {
+.conflictWarning, .dependencyWarning.bad {
 	background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAB3RJTUUH5ggdDgsAd6BifQAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAASISURBVHjajVVraBxVFL53ZnZ29pXZ7Dtv82pifqpogg9aRVCoNsQfIoqoP6rWWkV/aBF8IAjiA6JoFWsrRWtbK6aFUnyAVYnY5kF+NIm22jSRZjHZTXY32cfMzsNztnfqdjKpvfBxzz3n3HPuPefccyn5/8ENtUU6/DztchHShoyiaZ5VDDK95VxqFpbGlTbT9QR31UienfHAM0GB2+qmtNVJRwFHac147/3F1d3fZIqlq3XAHW4N39YpCfvAcBMySoapn1W0/IJmlHlKaEzgXJ1uweeilKvcyDD/OqNoD94/kx6x38juQDjaHnm0XRQ+AEOuZFlXdqfzC0cyxdlVw/wb5Fm2J+jnaNN9QW/T1ogvHhY4UTdJCQ6xrf9cah/IdScH/GctoYEbfeIBOBZ3LFtaemE+87NmkhMgmwAsAlS2RwREAdcFeHr7G/XyzXcGpCDoKsN5pf/xueXv1uTmFr+7bqI7nvm9J2EONgbTwHobcCsgBvD/siH2DsoQSCMPkABsAgx+2lybRdlYdzzZ5hbCl+LNZnFH1L9T4qh8XtWUV5K5L4G3HzDCTl4TFbjnrE2MrgH8AzgJ+Pz5C9kD82Vd9XE08WqiZjvwXNUOQuD1YST2pgtjGd04BOQ05hdgAsJk7QgzWQFwGvYc3L9UOI2Cbkl4CvNkOeBfr5fvhqTJOd3QoNy+YMaL1clf1o2ytWC0UCVH3cmhbPGgappmDc9Fn4j4b0D76MAjc/Qm1JosaWlQGAcyYzutOlpQk9aC0apNZzmlGSehkrDSSJckbMTQowMJ6rkZmSu6kYIJE6zZNq+M5NVxa8HoFZsO3mphSTOWKiVJCD5ODzpwlU1TrDApxXgqDvHOnVhVfrAWjM456Clw2MrN4IQ+6wYEEoSGSUTg/MR55OdUfcpaMDrvoGcGec6LBISrckNMlDaj6vhKyTUi32yVl21gyFIvzWd/ZeuUQxgJVKK/1c3XIz1eUP9gYSMB6DkPnOqKlfGhvNkgb7NViDWwLO9hcCpb17uNwRfRxvCGGIZ5M8CLISpCV/zzeK50HrV6feKzLSJf62BAhc1HEWRtBZFGFx/q84lPI30kWzwDE0alhA6wMc3vSuW/ykPXjAt8566m2reA57bZaFiHxiHtaQl9VMtz9fBGtA8XV7ET4Cu/1I8kwMaHQt4xq98c74gM2px0A/YwdFvMTQG399uO6Me4Z7InYdwre4aB3UcuNsTLBja1J7dH/TOWE8jL6LH2SD/LCZbdtQxICyiD5jZlGYfWjaF5rDpHl7VrLCTAwGZZeuS1OrkLGhfy8OdKwqdySjXJHMSUFyhp8HK0T6QUD4WtQ3t5Pjf1/UppLyyHWPx1uwPCShR/sTtCPDewI+a/fovsCXs4yhGHgTk7tFxY/CSdH4UX/DWwfsR8WuXp5ICwcIQAPRhiOG1vr8/d1OEWPAn4KlHhAvx00yWtOFFUZ+GT+Q1YPwHw8S2Tqt9sPQcWHxMcAdQB8AHi5yKTiy0am2GShQJn7D8Kk5GrcVAt51mVSeS/V47voMSMalcy8C8lkdET0Urh3wAAAABJRU5ErkJggg==');
 }
 .dependencyWarning {
 	background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAB3RJTUUH5ggdDgsj1ccTDwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAATBSURBVHjajVZpTFxVFL5vm52ZgWEb6tRatCRtjE1bpNjUiJpAUySG+EMkLpjYNChp019iTY0xbTV1adWiIS5pRQpF49LWDRKEIAGLWA2UVKApRcGyDAyzvffmLZ4z3lfHYaje5Muce+6557yz3mHIfy+2+Tn3rQ4rU8BzzFpkiLI+KsX0kaqDixOw1W50mVnp4P5NZuu+h+x73HZml0lgbkklA0ZG/UH9zcazkffO9Ini/zXAfvSs++58L3cSFPuoInV8Sg3PBrQYxxIm08UK+V7eLvCEpR6Nj/6hVtccWTyf7FGyAb5lv7tmrZc/zrJE+NOvSSfbIzNf9UsTIVGfhPMAveO2WxhfxV0WX02pNScjjTWpGhHHp5TaRw4tnoRzNZUB7p09rsrN64QWliHstwOS/8CJYLeqku/h7AJgFiDTOyZAFmAT5ObeFx5N21ay0eRWVCL1jcgP7m1Y+m5ZborXm7w9Rz2LAw2Z+itPpc0D61XAdkA2wPHN4YzX8AyBNPIAuYASwLG361wBPOt63TO9JpfzXI83/TXtLrfVW0yM6+qMKh1qDp0CXjPgPP1yJ8R9n3GJ0k7ANUA/oGn/B0st035NhtDl1j/seAZ4QqKBDLD6GBJNHdGfAmH9NJAjmD+ADvCQ5ctDzyKAIbjT+kl3dAgP1t3EP415Mgxwz1c7doBlVzCiK2f7pI+p8mhi8hdDWszYUJpPOEfZYbjbKiu6nmZjsp4ss21B/WjA6rSzRSg1MqnMg8Ag6kj6WvnnMWXa2FBaTpJZmF/S+qGcA397wd2DoUcDFp4jq5EZimhz8IMJVpIuBwdHY4PGhtLBJBn0aga888dDw8Sb04oGBEWJlx34w2A8pRTxXuoZkjuMDaWXUshJME7inimabjc8IIGwFolnzck6SOoVnpxVLxobSodTyOkuO2NDAsIV9xATpUxcU7FLyc053GqjvJIWhmzupaZQL93PpQgjWZPDOUBHHtK/jCuXMGzogdjWLfZgBTltjP3Fx9NKgcclfxlg6ote8WUE0pSXuPhd5badZoHh/UFN7hiUsIdENBCFYTbWPihdQanCAmGvL4tLT+GFDJ36JYIsryCyKpPLuLNAqEP6XL/0G0bSMICDaer9ryNtYVFXs93sbW/UOo8Az5ysYwUal+V4nfNdt4PNgypSQBdOAuxyzQhFDJRLUUm/Y9sGkxcEN5ZuMTtPd4md5J/JmNl4LmIH4OD7geaBbL/dZDtW6zzqy+aqNY3oh0+F+ocnlEY4uox3DQOYsMjwFQVHwwaYqG4wUlRVYt1RvtUy09YljtGqGQb0Uvf1tgPpFRXFllaYTWWovOFMeAzy+RaVCaHif41rLARAZVmh+Yn6KkcBjI/4B8gxfToqkx+hy6/CKOeg1lfZzKRY4BmctDg6lIPNoYudF+QPYfs5/QA12QChJYqv2H3pDrZy9wO2zTuLzB6YsixJsTBnn/WIsyfaowMLQe1TYHXSCrs+t1I9mdgbGYD1gBJ4IrcWFph8+XmcNSedjffI1JwmXfpdif56OTYBL1kfsLoA2HwLCTlb0YDBxyrKBHgB2ID4uLho/eMwnKahwF+cPxJZ3hsr/6tIOMc8WCiMLsc+EKlS5UYK/gJ/cAR3NbTlUgAAAABJRU5ErkJggg==');
+}
+.dependencyWarning.ok {
+	background-image: url('images/mod_icon_enabled.png');
+	background-size: 20px;
+	opacity: 0.7;
+}
+.dependencyWarning.ok:hover {
+	opacity: 0.9;
 }
 .modControlButton
 , .modLoadingLabel {

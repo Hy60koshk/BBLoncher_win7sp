@@ -448,7 +448,9 @@ namespace YobaLoncher {
 					File.Delete(Program.GamePath + file);
 				}
 			}
-			AvailableMods = Mods.FindAll(mi => mi.Versions.Find(v => v.HasVersion()) != null);
+			AvailableMods = Mods.FindAll(mi => mi.LatestVersion != null);
+			LauncherConfig.SaveMods();
+
 			/*foreach (ModInfo mi in AvailableMods) {
 				foreach (ModVersion mv in mi.Versions) {
 					if (mv.Conflicts is null) {
@@ -640,13 +642,13 @@ namespace YobaLoncher {
 		public void NormalizeHashes() {
 			if (HasHashes) {
 				for (int i = 0; i < Hashes.Count; i++) {
-					Hashes[i] = Hashes[i].ToUpper();
+					Hashes[i] = Hashes[i].ToUpperInvariant();
 				}
 			}
 		}
 		public bool HasHash(string hash) {
 			if (HasHashes) {
-				return null != Hashes.Find(x => x.Equals(hash.ToUpper()));
+				return null != Hashes.Find(x => x.Equals(hash, StringComparison.OrdinalIgnoreCase));
 			}
 			return false;
 		}
@@ -655,7 +657,7 @@ namespace YobaLoncher {
 				return true;
 			}
 			if (HasHashes) {
-				return null != Hashes.Find(x => x.Equals(hash.ToUpper()));
+				return null != Hashes.Find(x => x.Equals(hash, StringComparison.OrdinalIgnoreCase));
 			}
 			YobaDialog.ShowDialog(Path + "\r\n" + Url + "\r\n\r\nNo hashes specified for a file that has to be checked for a valid hash!\r\n(Иными словами, админ накосячил. Сообщите об этой ошибке как можно скорее.)");
 			return false;
@@ -789,7 +791,8 @@ namespace YobaLoncher {
 		}
 
 		public bool HasVersion() {
-			return ExeVersions.Contains(Program.GameVersion) || _anyVersions.Contains(ExeVersions[0]);
+			string gvName = Program.GameVersion;
+			return ExeVersions.Contains(gvName) || _anyVersions.Contains(ExeVersions[0]);
 		}
 	}
 
@@ -871,6 +874,7 @@ namespace YobaLoncher {
 		public bool HasExecutable = false;
 		public List<string> Screenshots;
 		public List<ModVersion> Versions;
+		public List<ModVersion> AvailableVersions;
 		public List<ModDep[]> Dependencies = null;
 		public List<ModDep> Conflicts = null;
 
@@ -981,7 +985,7 @@ namespace YobaLoncher {
 			}
 		}
 
-		public void InitForVersion(MainGameVersion gv) {
+		public async Task InitForVersion(MainGameVersion gv) {
 			ModConfigurationInfo = LauncherConfig.InstalledMods.Find(x => x.Id == null ? x.Name.Equals(Name) : x.Id.Equals(Id));
 			if (ModConfigurationInfo is null) {
 				List<ModMigration> migratedVariants = Program.LoncherSettings.ModMigrations.FindAll(x => x.NewId.Equals(Id));
@@ -994,15 +998,14 @@ namespace YobaLoncher {
 				}
 			}
 			
+			bool doReinstall = false;
 			CurrentVersion = null;
 			LatestVersion = null;
 			string exeVersion = Program.GameVersion.ToUpperInvariant();
-
-			foreach (ModVersion v in Versions) {
-				if (v.HasVersion()) {
-					LatestVersion = v;
-					break;
-				}
+			AvailableVersions = Versions.FindAll(x => x.HasVersion());
+			
+			if (AvailableVersions.Count > 0) {
+				LatestVersion = AvailableVersions[0];
 			}
 
 			if (ModConfigurationInfo is null) {
@@ -1014,19 +1017,65 @@ namespace YobaLoncher {
 						List<string> fileList = mv.Files.Select(x => x.Path).ToList();
 						ModConfigurationInfo = new ModCfgInfo(Id, Name, exeVer, mv.VersionName, fileList, true);
 						LauncherConfig.InstalledMods.Add(ModConfigurationInfo);
+						break;
 					}
 				}
 			}
-			else {
+
+			if (ModConfigurationInfo != null) {
 				if (ModConfigurationInfo.ModVersion != null) {
 					CurrentVersion = Versions.Find(x => x.VersionName.Equals(ModConfigurationInfo.ModVersion));
 				}
 				else if (ModConfigurationInfo.GameVersion.Equals(exeVersion)) {
 					CurrentVersion = LatestVersion;
 				}
+				if (CurrentVersion is null && ModConfigurationInfo.Active && AvailableVersions.Count > 0) {
+					List<string> unmatchedFiles = ModConfigurationInfo.FileList.Where(
+						file => null == LatestVersion.Files.Find(f => f.Path.Equals(file))
+					).ToList();
+					bool doFilesMatch = unmatchedFiles.Count < 1;
+					bool doFixMod = doFilesMatch || DialogResult.Yes == YobaDialog.ShowDialog(
+						String.Format(
+							Locale.Get("UnknownModVersionHasDifferentFiles")
+							, ModConfigurationInfo.Name, ModConfigurationInfo.ModVersion
+						)
+						, new UIElement[] {
+						new UIElement() {
+							Caption = Locale.Get("UpdateBtn"), Result = DialogResult.Yes
+						},
+						new UIElement() {
+							Caption = Locale.Get("DisableMod"), Result = DialogResult.No
+						}
+						}
+					);
+					if (doFixMod) {
+						ModConfigurationInfo.GameVersion = exeVersion;
+						ModConfigurationInfo.FileList = LatestVersion.Files.Select(x => x.Path).ToList();
+						CurrentVersion = LatestVersion;
+
+						if (!doFilesMatch) {
+							List<FileInfo> oldVersionFiles = new List<FileInfo>();
+							foreach (string file in unmatchedFiles) {
+								bool fileIsInUse = gv.AllModFiles.Find(f => f.Path.Equals(file)) != null;
+								if (!fileIsInUse) {
+									FileInfo fi = new FileInfo();
+									fi.Path = file;
+									oldVersionFiles.Add(fi);
+								}
+							}
+							MoveToDisabled(oldVersionFiles);
+						}
+					}
+				}
 			}
+
 			if (CurrentVersion == null) {
-				if (Versions.Count > 1) {
+				if (LatestVersion is null) {
+					VersionedName = Name;
+					VersionedDescription = Description;
+					VersionedDetailedDescription = DetailedDescription;
+				}
+				else if (AvailableVersions.Count > 1) {
 					VersionedName = Name;
 					VersionedDescription = Description ?? LatestVersion.Description;
 					VersionedDetailedDescription = DetailedDescription ?? LatestVersion.DetailedDescription;
@@ -1199,7 +1248,7 @@ namespace YobaLoncher {
 			
 			foreach (string file in ModConfigurationInfo.FileList) {
 				bool fileIsInUse = gv.AllModFiles.Find(f => f.Path.Equals(file)) != null;
-				if (fileIsInUse) {
+				if (!fileIsInUse) {
 					FileInfo fi = new FileInfo();
 					fi.Path = file;
 					oldVersionFiles.Add(fi);

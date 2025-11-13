@@ -140,6 +140,7 @@ namespace YobaLoncher {
 			, { "AreYouSureUninstallMod", "Are you sure you want to uninstall {0}?" }
 			, { "SomeModsDependOnThisDelete", "Are you sure you want to delete this mod? These mods depend on it:\r\n{0}" }
 			, { "SomeModsDependOnThisDisable", "Are you sure you want to disable this mod? These mods depend on it:\r\n{0}" }
+			, { "UnknownModVersionHasDifferentFiles", "Your current version of the mod {0} ({1}) is not supported by the launcher anymore and has severe file differences.\r\nWould you like to update the mod to the latest supported version, or just disable the mod?" }
 			, { "ModHasConflict", "{0} Mod conflicts with the following mod:\r\n{1}" }
 			, { "ModHasConflicts", "{0} Mod conflicts with the following mods:\r\n{1}" }
 			, { "ModHasDependency", "{0} Mod has dependencies. Please, activate the following mod: {1}" }

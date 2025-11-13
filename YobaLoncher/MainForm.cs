@@ -165,11 +165,11 @@ namespace YobaLoncher {
 			}
 		}
 
-		public void CheckModUpdates() {
-			CheckModUpdates(false);
+		public async Task CheckModUpdates() {
+			await CheckModUpdates(false);
 		}
 
-		public bool CheckModUpdates(bool isBeforeRun) {
+		public async Task<bool> CheckModUpdates(bool isBeforeRun) {
 			bool allowRun = true;
 			LinkedList<ModInfo> outdatedMods = new LinkedList<ModInfo>();
 			LinkedList<ModInfo> brokenMods = new LinkedList<ModInfo>();
@@ -181,39 +181,34 @@ namespace YobaLoncher {
 			
 			foreach (ModInfo mi in availableMods) {
 				if (mi.IsActive) {
-					bool hasIt = false;
+					CheckResult modFileCheckResult = await FileChecker.CheckFiles(mi.CurrentVersion.Files);
+				
 					if (mi.LatestVersion != mi.CurrentVersion) {
 						outdatedMods.AddLast(mi);
 						mi.IsUpdateAvailable = true;
-						foreach (FileInfo mif in mi.LatestVersion.Files) {
-							mif.IsOK = FileChecker.CheckFileMD5(mif);
-							if (!mif.IsOK) {
-								outdatedModsSize += mif.Size;
-							}
-						}
-						foreach (FileInfo mif in mi.CurrentVersion.Files) {
-							mif.IsOK = FileChecker.CheckFileMD5(mif);
-							if (!mif.IsOK) {
+
+						List<FileInfo> filesDelta = mi.LatestVersion.Files.Except(mi.CurrentVersion.Files).ToList();
+						CheckResult deltaFilesCheckResult = await FileChecker.CheckFiles(filesDelta);
+
+						if (!modFileCheckResult.IsAllOk) {
+							brokenMods.AddLast(mi);
+							foreach (FileInfo mif in modFileCheckResult.InvalidFiles) {
 								brokenModsSize += mif.Size;
-								if (!hasIt) {
-									hasIt = true;
-									brokenMods.AddLast(mi);
-								}
 								if (!mif.IsPresent && criticalMods.Last?.Value != mi) {
 									criticalMods.AddLast(mi);
 								}
 							}
 						}
+						foreach (FileInfo mif in deltaFilesCheckResult.InvalidFiles) {
+							outdatedModsSize += mif.Size;
+						}
 					}
 					else {
-						foreach (FileInfo mif in mi.LatestVersion.Files) {
-							if (!mif.IsOK) {
+						if (!modFileCheckResult.IsAllOk) {
+							brokenMods.AddLast(mi);
+							mi.IsUpdateAvailable = true;
+							foreach (FileInfo mif in modFileCheckResult.InvalidFiles) {
 								brokenModsSize += mif.Size;
-								if (!hasIt) {
-									hasIt = true;
-									brokenMods.AddLast(mi);
-									mi.IsUpdateAvailable = true;
-								}
 								if (!mif.IsPresent && criticalMods.Last?.Value != mi) {
 									criticalMods.AddLast(mi);
 								}
@@ -713,7 +708,7 @@ namespace YobaLoncher {
 						else {
 							SetReady(true);
 							if (YobaDialog.ShowDialog(Locale.Get("UpdateSuccessful"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
-								launch();
+								Launch();
 							}
 						}
 					}
@@ -757,7 +752,7 @@ namespace YobaLoncher {
 
 		public void OnLaunchGameBtn() {
 			if (ReadyToGo_) {
-				launch();
+				Launch();
 			}
 			else {
 				if (Program.OfflineMode) {
@@ -778,12 +773,12 @@ namespace YobaLoncher {
 			}
 		}
 
-		private void launchGameBtn_Click(object sender, EventArgs e) {
+		private void LaunchGameBtn_Click(object sender, EventArgs e) {
 			OnLaunchGameBtn();
 		}
 
-		private void launch() {
-			if (!(CheckModUpdates(true) && CheckDepsAndConflicts())) {
+		private async Task Launch() {
+			if (!(await CheckModUpdates(true) && CheckDepsAndConflicts())) {
 				return;
 			}
 			string args;
