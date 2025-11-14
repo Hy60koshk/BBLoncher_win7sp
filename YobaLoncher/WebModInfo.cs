@@ -22,15 +22,7 @@ namespace YobaLoncher {
 
 				List<ModInfo> availableMods = Program.LoncherSettings.AvailableMods;
 
-				List<ModDep> conflicts = null;
-				if (mv.Conflicts != null) {
-					if (!mv.Conflicts[0].ModId.Equals("-")) {
-						conflicts = mv.Conflicts;
-					}
-				}
-				else if (mi.Conflicts != null) {
-					conflicts = mi.Conflicts;
-				}
+				List<ModDep> conflicts = mv.GetConflicts();
 				if (conflicts != null) {
 					foreach (ModDep conf in conflicts) {
 						ModInfo cmi = availableMods.Find(m => m.Id.Equals(conf.ModId));
@@ -42,9 +34,7 @@ namespace YobaLoncher {
 								}
 							}
 							else {
-								ModVersion cmv = cmi.Versions.Find(
-									v => v.VersionName.Equals(conf.VerId, System.StringComparison.OrdinalIgnoreCase)
-								);
+								ModVersion cmv = cmi.FindVersionForDep(conf);
 								if (cmv != null) {
 									Conflicts.Add(cmi.Name + ' ' + cmv.VersionName);
 									if (cmi.IsActive && cmv == cmi.CurrentVersion) {
@@ -56,15 +46,7 @@ namespace YobaLoncher {
 					}
 				}
 
-				List<ModDep[]> dependencies = null;
-				if (mv.Dependencies != null) {
-					if (!mv.Dependencies[0][0].ModId.Equals("-")) {
-						dependencies = mv.Dependencies;
-					}
-				}
-				else if (mi.Dependencies != null) {
-					dependencies = mi.Dependencies;
-				}
+				List<ModDep[]> dependencies = mv.GetDependencies();
 				if (dependencies != null) {
 					foreach (ModDep[] depVariants in dependencies) {
 						List<string> depsTitles = new List<string>();
@@ -79,9 +61,7 @@ namespace YobaLoncher {
 									}
 								}
 								else {
-									ModVersion cmv = cmi.Versions.Find(
-										v => v.VersionName.Equals(variant.VerId, System.StringComparison.OrdinalIgnoreCase)
-									);
+									ModVersion cmv = cmi.FindVersionForDep(variant);
 									if (cmv != null) {
 										depsTitles.Add(cmi.Name + ' ' + cmv.VersionName);
 										if (cmi.IsActive && cmi.CurrentVersion == cmv) {

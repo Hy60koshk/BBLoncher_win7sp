@@ -767,10 +767,29 @@ body.wide .modEntry.compact {
 .dependencyWarning.ok {
 	background-image: url('images/mod_icon_enabled.png');
 	background-size: 20px;
-	opacity: 0.7;
+	opacity: 0.65;
+	margin-top: -1px;
 }
 .dependencyWarning.ok:hover {
 	opacity: 0.9;
+	margin-top: 0px;
+}
+.modEntry:not(.active) .conflictWarning {
+	opacity: 0.65;
+}
+.modEntry:not(.active) .dependencyWarning {
+	opacity: 0.75;
+}
+.modEntry:not(.active) .conflictWarning:hover
+, .modEntry:not(.active) .dependencyWarning:hover
+{
+	opacity: 0.9;
+}
+.modEntry:not(.active) .dependencyWarning.ok {
+	opacity: 0.4;
+}
+.modEntry:not(.active) .dependencyWarning.ok:hover {
+	opacity: 0.7;
 }
 .modControlButton
 , .modLoadingLabel {
