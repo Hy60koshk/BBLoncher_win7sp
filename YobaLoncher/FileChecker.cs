@@ -98,7 +98,7 @@ namespace YobaLoncher {
 		}
 
 		private static async Task UpdatefileSize(FileInfo file) {
-			if (file.Size < 1) {
+			if (file.Size < 1 && file.IsUrlAvailable) {
 				WebRequest webRequest = WebRequest.Create(file.Url);
 				webRequest.Method = "HEAD";
 

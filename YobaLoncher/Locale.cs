@@ -75,6 +75,8 @@ namespace YobaLoncher {
 			, { "DLRate", "Downloading: {3} - {0} of {1} @ {2}" }
 			, { "AllFilesIntact", "All files intact, we're ready to go." }
 			, { "FilesMissing", "{0} files are missing or out of date." }
+			, { "InaccessibleFilesMissing", "These (unimportant) files are missing. If you want to have the corresponding content, you ought to find them on your own (for legal reasons):[n]{0}" }
+			, { "ImportantInaccessibleFilesMissing", "These files are missing, yet you ought to find them on your own (for legal reasons):[n]{0}[n][n]Please, get them files and restart the launcher." }
 			, { "StatusListDownloadedFile", "File is OK" }
 			, { "StatusListRecommendedFile", "Existing file" }
 			, { "StatusListOptionalFile", "Optional file" }
@@ -89,6 +91,9 @@ namespace YobaLoncher {
 			, { "StatusComboboxUpdate", "Update" }
 			, { "StatusComboboxUpdateForced", "Update" }
 			, { "StatusComboboxNoUpdate", "Don't update" }
+			, { "StatusComboboxManualInstallRequired", "Manual Installation Required" }
+			, { "StatusComboboxManualUpdateRequired", "Manual Update Required" }
+			, { "StatusComboboxManualOnly", "Manual Installation Only" }
 			, { "StatusCopyingFiles", "Updating files in the game directory..." }
 			, { "StatusUpdatingDone", "Done!" }
 			, { "StatusDownloadError", "Download failed" }

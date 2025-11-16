@@ -903,6 +903,7 @@ function YLExtInit() {
 		+ ', StatusListOptionalFile, StatusListOptionalFileTooltip, StatusListRequiredFile, StatusListOptionalFileTooltip'
 		+ ', StatusComboboxDownload, StatusComboboxDownloadForced, StatusComboboxNoDownload, StatusComboboxUpdate'
 		+ ', StatusComboboxUpdateForced, StatusComboboxNoUpdate'
+		+ ', StatusComboboxManualUpdateRequired, StatusComboboxManualInstallRequired, StatusComboboxManualOnly'
 	);
 
 	settingsLocale = YL.GetLocs(
@@ -1123,9 +1124,9 @@ function YLExtInit() {
 							if (ver.DepsFulfilled && ver.DepsFulfilled.length) {
 								hasDepsAtAll = true
 								var depsArr = []
-								for (var i = 0; i < ver.DepsFulfilled.length; i++) {
-									var deps = ver.Dependencies[i].join(depOrStr)
-									if (ver.DepsFulfilled[i]) {
+								for (var j = 0; j < ver.DepsFulfilled.length; j++) {
+									var deps = ver.Dependencies[j].join(depOrStr)
+									if (ver.DepsFulfilled[j]) {
 										deps = '[color=#95EE6E]' + deps + '[/color]'
 									}
 									else {
@@ -1225,7 +1226,23 @@ function YLExtInit() {
 								tooltip = statusLocale["StatusListRequiredFileTooltip"]
 							}
 						}
-						if (fi.IsPresent) {
+						if (fi.Url == '-') {
+							if (fi.IsPresent) {
+								if (fi.Importance > 0) {
+									options = [{ Text: statusLocale['StatusComboboxManualOnly'], Value: false }]
+								}
+								else {
+									options = [{ Text: statusLocale['StatusComboboxManualUpdateRequired'], Value: false }]
+								}
+							}
+							else if (fi.Importance > 1) {
+								options = [{ Text: statusLocale['StatusComboboxManualOnly'], Value: false }]
+							}
+							else {
+								options = [{ Text: statusLocale['StatusComboboxManualInstallRequired'], Value: false }]
+							}
+						}
+						else if (fi.IsPresent) {
 							if (fi.Importance > 0) {
 								options = [{ Text: statusLocale['StatusComboboxUpdate'], Value: true }, { Text: statusLocale['StatusComboboxNoUpdate'], Value: false }]
 							}

@@ -25,6 +25,7 @@ namespace YobaLoncher {
 		private DownloadProgressTracker downloadProgressTracker_;
 		public string ThePath = "";
 		private LinkedList<FileInfo> filesToUpload_;
+		private List<string> inaccessibleFilesImportant_;
 		private LinkedList<ModInfo> modsToUpdate_;
 		private LinkedListNode<FileInfo> currentFile_ = null;
 		private bool ReadyToGo_ = false;
@@ -85,6 +86,37 @@ namespace YobaLoncher {
 			else {
 				SetReady(true);
 			}
+
+			List<string> inaccessibleFiles = new List<string>();
+			inaccessibleFilesImportant_ = new List<string>();
+			if (filesToUpload_.Count > 0) {
+				LinkedListNode<FileInfo> ftuNode = filesToUpload_.First;
+				while (ftuNode != null) {
+					if (!ftuNode.Value.IsUrlAvailable) {
+						(ftuNode.Value.Importance < 2 ? inaccessibleFilesImportant_ : inaccessibleFiles).Add(ftuNode.Value.Path);
+						LinkedListNode<FileInfo> nextNode = ftuNode.Next;
+						filesToUpload_.Remove(ftuNode);
+						ftuNode = nextNode;
+					}
+					else {
+						ftuNode = ftuNode.Next;
+					}
+				}
+			}
+
+			if (inaccessibleFilesImportant_.Count > 0) {
+				YobaDialog.ShowDialog(String.Format(
+					Locale.Get("ImportantInaccessibleFilesMissing")
+					, String.Join("\n", inaccessibleFilesImportant_)
+				));
+			}
+			if (inaccessibleFiles.Count > 0) {
+				YobaDialog.ShowDialog(String.Format(
+					Locale.Get("InaccessibleFilesMissing")
+					, String.Join("\n", inaccessibleFiles)
+				));
+			}
+
 			progressBarInfo_.Caption = ReadyToGo_ ? Locale.Get("AllFilesIntact") : String.Format(Locale.Get("FilesMissing"), missingFilesCount);
 
 			Text = Locale.Get("MainFormTitle");
@@ -475,11 +507,7 @@ namespace YobaLoncher {
 				mainBrowser.Document.InvokeScript(funcName, args);
 			}
 		}
-		private void RunScript(string funcName) {
-			if (mainBrowser.Visible) {
-				mainBrowser.Document.InvokeScript(funcName);
-			}
-		}
+
 		private void UpdateProgressBar(int progress) {
 			progressBarInfo_.Progress = progress;
 			RunScript("__updateProgressBar", new object[] { progress });
@@ -689,6 +717,12 @@ namespace YobaLoncher {
 		}
 
 		private async Task Launch() {
+			if (inaccessibleFilesImportant_.Count > 0) {
+				YobaDialog.ShowDialog(String.Format(
+					Locale.Get("ImportantInaccessibleFilesMissing")
+					, String.Join("\n", inaccessibleFilesImportant_)
+				));
+			}
 			if (!(await CheckModUpdates(true) && CheckDepsAndConflicts())) {
 				return;
 			}

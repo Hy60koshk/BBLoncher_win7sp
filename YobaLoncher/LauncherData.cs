@@ -636,6 +636,12 @@ namespace YobaLoncher {
 				return Hashes != null && Hashes.Count > 0;
 			}
 		}
+		[JsonIgnore]
+		public bool IsUrlAvailable {
+			get {
+				return YU.stringHasText(Url) && !Url.Equals("-");
+			}
+		}
 
 		public void NormalizeHashes() {
 			if (HasHashes) {
