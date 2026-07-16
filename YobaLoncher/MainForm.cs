@@ -62,93 +62,115 @@ namespace YobaLoncher {
 			//int winstyle = NativeWinAPI.GetWindowLong(basePanel.Handle, NativeWinAPI.GWL_EXSTYLE);
 			//NativeWinAPI.SetWindowLong(basePanel.Handle, NativeWinAPI.GWL_EXSTYLE, winstyle | NativeWinAPI.WS_EX_COMPOSITED);
 
+			if (mainBrowser is null) {
+				YU.ErrorAndKill(Locale.Get("MainBrowserIsNull"));
+			}
+
 			SuspendLayout();
 
 			if (!Program.OfflineMode) {
 				downloadProgressTracker_ = new DownloadProgressTracker(50, TimeSpan.FromMilliseconds(500));
 			}
 
-			int missingFilesCount = Program.GameFileCheckResult.InvalidFiles.Count;
+			try {
+				int missingFilesCount = Program.GameFileCheckResult.InvalidFiles.Count;
 
-			if (missingFilesCount > 0) {
-				filesToUpload_ = Program.GameFileCheckResult.InvalidFiles;
-				bool allowRun = true;
-				foreach (FileInfo fi in filesToUpload_) {
-					if (fi.Importance < 2 && (!fi.IsPresent || (!fi.IsOK && fi.Importance < 1))) {
-						allowRun = false;
+				if (missingFilesCount > 0) {
+					filesToUpload_ = Program.GameFileCheckResult.InvalidFiles;
+					bool allowRun = true;
+					foreach (FileInfo fi in filesToUpload_) {
+						if (fi is null) {
+							YU.ErrorAndKill(Locale.Get("IE_NullFileInfoToUpload1"), true);
+							allowRun = false;
+						}
+						else if (fi.NeedsDL) {
+							allowRun = false;
+						}
+						else {
+							missingFilesCount--;
+						}
 					}
-					else {
-						missingFilesCount--;
+					SetReady(allowRun);
+				}
+				else {
+					SetReady(true);
+				}
+
+				List<string> inaccessibleFiles = new List<string>();
+				inaccessibleFilesImportant_ = new List<string>();
+				if (filesToUpload_ != null && filesToUpload_.Count > 0) {
+					LinkedListNode<FileInfo> ftuNode = filesToUpload_.First;
+					while (ftuNode != null) {
+						if (ftuNode.Value is null) {
+							YU.ErrorAndKill(Locale.Get("IE_NullFileInfoToUpload2"), true);
+							ftuNode = ftuNode.Next;
+						}
+						if (!ftuNode.Value.IsUrlAvailable) {
+							(ftuNode.Value.IsMandatory ? inaccessibleFilesImportant_ : inaccessibleFiles)
+								.Add(ftuNode.Value.Path);
+							LinkedListNode<FileInfo> nextNode = ftuNode.Next;
+							filesToUpload_.Remove(ftuNode);
+							ftuNode = nextNode;
+						}
+						else {
+							ftuNode = ftuNode.Next;
+						}
 					}
 				}
-				SetReady(allowRun);
-			}
-			else {
-				SetReady(true);
-			}
 
-			List<string> inaccessibleFiles = new List<string>();
-			inaccessibleFilesImportant_ = new List<string>();
-			if (filesToUpload_.Count > 0) {
-				LinkedListNode<FileInfo> ftuNode = filesToUpload_.First;
-				while (ftuNode != null) {
-					if (!ftuNode.Value.IsUrlAvailable) {
-						(ftuNode.Value.Importance < 2 ? inaccessibleFilesImportant_ : inaccessibleFiles).Add(ftuNode.Value.Path);
-						LinkedListNode<FileInfo> nextNode = ftuNode.Next;
-						filesToUpload_.Remove(ftuNode);
-						ftuNode = nextNode;
-					}
-					else {
-						ftuNode = ftuNode.Next;
-					}
+				if (inaccessibleFilesImportant_.Count > 0) {
+					YobaDialog.ShowDialog(String.Format(
+						Locale.Get("ImportantInaccessibleFilesMissing")
+						, String.Join("\n", inaccessibleFilesImportant_)
+					));
 				}
-			}
+				/*if (inaccessibleFiles.Count > 0) {
+					YobaDialog.ShowDialog(String.Format(
+						Locale.Get("InaccessibleFilesMissing")
+						, String.Join("\n", inaccessibleFiles)
+					));
+				}*/
 
-			if (inaccessibleFilesImportant_.Count > 0) {
-				YobaDialog.ShowDialog(String.Format(
-					Locale.Get("ImportantInaccessibleFilesMissing")
-					, String.Join("\n", inaccessibleFilesImportant_)
-				));
-			}
-			if (inaccessibleFiles.Count > 0) {
-				YobaDialog.ShowDialog(String.Format(
-					Locale.Get("InaccessibleFilesMissing")
-					, String.Join("\n", inaccessibleFiles)
-				));
-			}
+				progressBarInfo_.Caption = ReadyToGo_ ? Locale.Get("AllFilesIntact") : String.Format(Locale.Get("FilesMissing"), missingFilesCount);
 
-			progressBarInfo_.Caption = ReadyToGo_ ? Locale.Get("AllFilesIntact") : String.Format(Locale.Get("FilesMissing"), missingFilesCount);
+				Text = Locale.Get("MainFormTitle");
 
-			Text = Locale.Get("MainFormTitle");
+				int windowH = LauncherConfig.WindowHeight;
+				int windowW = LauncherConfig.WindowWidth;
+				if (windowH > this.MaximumSize.Height) {
+					windowH = this.MaximumSize.Height;
+				}
+				else if (windowH < this.MinimumSize.Height) {
+					windowH = this.MinimumSize.Height;
+				}
+				if (windowW > this.MaximumSize.Width) {
+					windowW = this.MaximumSize.Width;
+				}
+				else if (windowW < this.MinimumSize.Width) {
+					windowW = this.MinimumSize.Width;
+				}
+				this.ClientSize = new Size(windowW, windowH);
+				mainBrowser.Size = new Size(windowW - 4, windowH - 2);
+				draggingPanel.UpdateSize(windowW, 24);
+				mainBrowser.Location = new Point(1, 0);
+				mainBrowser.ObjectForScripting = YobaWebController.Instance;
+				YobaWebController.Instance.Form = this;
+				mainBrowser.Navigated += MainBrowser_Navigated;
+				mainBrowser.Navigating += webBrowser_Navigating;
 
-			int windowH = LauncherConfig.WindowHeight;
-			int windowW = LauncherConfig.WindowWidth;
-			if (windowH > this.MaximumSize.Height) {
-				windowH = this.MaximumSize.Height;
-			}
-			else if (windowH < this.MinimumSize.Height) {
-				windowH = this.MinimumSize.Height;
-			}
-			if (windowW > this.MaximumSize.Width) {
-				windowW = this.MaximumSize.Width;
-			}
-			else if (windowW < this.MinimumSize.Width) {
-				windowW = this.MinimumSize.Width;
-			}
-			this.ClientSize = new Size(windowW, windowH);
-			mainBrowser.Size = new Size(windowW - 4, windowH - 2);
-			draggingPanel.UpdateSize(windowW, 24);
-			mainBrowser.Location = new Point(1, 0);
-			mainBrowser.ObjectForScripting = YobaWebController.Instance;
-			YobaWebController.Instance.Form = this;
-			mainBrowser.Navigated += MainBrowser_Navigated;
-			mainBrowser.Navigating += webBrowser_Navigating;
-			UpdateMainWebView();
+				YU.Log("Main data initialized, updating WebView...", 1);
 
-			BackgroundImageLayout = ImageLayout.Stretch;
-			BackgroundImage = Program.LoncherSettings.Background;
+				UpdateMainWebView();
 
-			PerformLayout();
+				BackgroundImageLayout = ImageLayout.Stretch;
+				BackgroundImage = Program.LoncherSettings.Background;
+
+				PerformLayout();
+
+			}
+			catch (Exception ex) {
+				YU.ErrorAndKill(Locale.Get("CannotInitMainWindow") + ":\r\n" + ex.Message, ex);
+			}
 		}
 
 		public void CheckModUpdate(string modId) {
@@ -164,15 +186,15 @@ namespace YobaLoncher {
 			uint outdatedmodssize = 0;
 			if (mi.LatestVersion != mi.CurrentVersion) {
 				foreach (FileInfo mif in mi.LatestVersion.Files) {
-					mif.IsOK = FileChecker.CheckFileMD5(mif);
-					if (!mif.IsOK) {
+					mif.IsHashOk = FileChecker.CheckFileMD5(mif);
+					if (!mif.IsHashOk) {
 						outdatedmodssize += mif.Size;
 					}
 				}
 			}
 			else {
 				foreach (FileInfo mif in mi.CurrentVersion.Files) {
-					if (!mif.IsOK) {
+					if (!mif.IsHashOk) {
 						outdatedmodssize += mif.Size;
 					}
 				}
@@ -183,7 +205,7 @@ namespace YobaLoncher {
 				}
 				else {
 					if (DialogResult.Yes == YobaDialog.ShowDialog(
-							String.Format(Locale.Get("YouHaveOutdatedMods"), mi.VersionedName, mi.LatestVersion.VersionName, YU.formatFileSize(outdatedmodssize))
+							String.Format(Locale.Get("YouHaveOutdatedMods"), mi.VersionedName, mi.LatestVersion.VersionName, YU.FormatFileSize(outdatedmodssize))
 							, YobaDialog.YesNoBtns)) {
 						if (!UpdateInProgress_) {
 							modsToUpdate_ = new LinkedList<ModInfo>();
@@ -251,7 +273,7 @@ namespace YobaLoncher {
 				else {
 					bool modIsIntact = true;
 					foreach (FileInfo fi in mi.LatestVersion.Files) {
-						if (!fi.IsOK) {
+						if (!fi.IsHashOk) {
 							modIsIntact = false;
 							break;
 						}
@@ -344,9 +366,9 @@ namespace YobaLoncher {
 						String.Format(
 							Locale.Get(locKey)
 							, brokenModsStr
-							, YU.formatFileSize(brokenModsSize)
+							, YU.FormatFileSize(brokenModsSize)
 							, outdatedModsStr
-							, YU.formatFileSize(outdatedModsSize)
+							, YU.FormatFileSize(outdatedModsSize)
 						)
 						, btns
 					);
@@ -461,6 +483,7 @@ namespace YobaLoncher {
 			catch (Exception ex) {
 				if (YobaDialog.ShowDialog(ex.Message, YobaDialog.OKCopyStackBtns) == DialogResult.Retry) {
 					YU.CopyExceptionToClipboard(ex);
+					YU.LogException(ex, 2);
 				}
 			}
 			return zoom;
@@ -530,9 +553,9 @@ namespace YobaLoncher {
 		}
 
 		private async void DownloadFile(FileInfo fileInfo) {
-			if (!YU.stringHasText(fileInfo.UploadAlias)) {
+			if (!YU.StringHasText(fileInfo.UploadAlias)) {
 				fileInfo.UploadAlias = fileInfo.Hashes.Count > 0 ? fileInfo.Hashes[0] : null;
-				if (!YU.stringHasText(fileInfo.UploadAlias)) {
+				if (!YU.StringHasText(fileInfo.UploadAlias)) {
 					int lios = Math.Max(fileInfo.Path.LastIndexOf('\\'), fileInfo.Path.LastIndexOf('/'));
 					fileInfo.UploadAlias = lios > -1 ? fileInfo.Path.Substring(lios + 1, fileInfo.Path.Length) : fileInfo.Path;
 				}
@@ -555,8 +578,8 @@ namespace YobaLoncher {
 			try {
 				string labelText = string.Format(
 					Locale.Get("DLRate")
-					, YU.formatFileSize(0)
-					, YU.formatFileSize(fileInfo.Size)
+					, YU.FormatFileSize(0)
+					, YU.FormatFileSize(fileInfo.Size)
 					, ""
 					, fileInfo.Description
 				);
@@ -565,6 +588,7 @@ namespace YobaLoncher {
 			}
 			catch (Exception ex) {
 				ShowDownloadError(string.Format(Locale.Get("CannotDownloadFile"), fileInfo.Path) + "\r\n" + ex.Message);
+				YU.LogException(ex, 1);
 			}
 		}
 
@@ -575,8 +599,8 @@ namespace YobaLoncher {
 				int progressVal = (int)Math.Floor((double)e.BytesReceived / e.TotalBytesToReceive * progressBarInfo_.MaxValue);
 				string labelText = string.Format(
 					Locale.Get("DLRate")
-					, YU.formatFileSize(e.BytesReceived)
-					, YU.formatFileSize(e.TotalBytesToReceive)
+					, YU.FormatFileSize(e.BytesReceived)
+					, YU.FormatFileSize(e.TotalBytesToReceive)
 					, downloadProgressTracker_.GetBytesPerSecondString()
 					, currentFile_.Value.Description
 				);
@@ -654,9 +678,11 @@ namespace YobaLoncher {
 				}
 				catch (UnauthorizedAccessException ex) {
 					ShowDownloadError(string.Format(Locale.Get("DirectoryAccessDenied"), filename) + ":\r\n" + ex.Message);
+					YU.LogException(ex, 1);
 				}
 				catch (Exception ex) {
 					ShowDownloadError(string.Format(Locale.Get("CannotMoveFile"), filename) + ":\r\n" + ex.Message);
+					YU.LogException(ex, 1);
 				}
 				UpdateInProgress_ = false;
 			}
@@ -848,9 +874,9 @@ namespace YobaLoncher {
 		private void MainForm_Shown(object sender, EventArgs e) {
 			if (!(Program.FirstRun || Program.OfflineMode)
 					&& Program.LoncherSettings.Survey != null
-					&& YU.stringHasText(Program.LoncherSettings.Survey.Text)
-					&& YU.stringHasText(Program.LoncherSettings.Survey.Url)
-					&& YU.stringHasText(Program.LoncherSettings.Survey.ID)
+					&& YU.StringHasText(Program.LoncherSettings.Survey.Text)
+					&& YU.StringHasText(Program.LoncherSettings.Survey.Url)
+					&& YU.StringHasText(Program.LoncherSettings.Survey.ID)
 					&& (LauncherConfig.LastSurveyId is null || LauncherConfig.LastSurveyId != Program.LoncherSettings.Survey.ID)) {
 				int showSurvey = new Random().Next(0, 100);
 				string discardId = "-0" + Program.LoncherSettings.Survey.ID;

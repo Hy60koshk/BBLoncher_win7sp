@@ -22,6 +22,23 @@ function make$(tag) {
 	return $(el)
 }
 
+var ImportanceEnum = {
+	MandatoryExact: 0
+	, MandatoryPresent: 1
+	, OptionalExact: 2
+	, OptionalPresent: 3
+}
+
+function isMandatory(fileInfo) {
+	return fileInfo.Importance === ImportanceEnum.MandatoryExact
+		|| fileInfo.Importance === ImportanceEnum.MandatoryPresent
+}
+
+function isStrictHash(fileInfo) {
+	return fileInfo.Importance === ImportanceEnum.MandatoryExact
+		|| fileInfo.Importance === ImportanceEnum.OptionalExact
+}
+
 $.fn.onActivate = function(fn) {
 	return this.click(fn).keyup(function(e) {
 		if (e.key == "Enter" || e.key == "Spacebar" || e.key == " ") {
@@ -904,6 +921,7 @@ function YLExtInit() {
 		+ ', StatusComboboxDownload, StatusComboboxDownloadForced, StatusComboboxNoDownload, StatusComboboxUpdate'
 		+ ', StatusComboboxUpdateForced, StatusComboboxNoUpdate'
 		+ ', StatusComboboxManualUpdateRequired, StatusComboboxManualInstallRequired, StatusComboboxManualOnly'
+		+ ', StatusNoGameVersionFiles'
 	);
 
 	settingsLocale = YL.GetLocs(
@@ -1197,7 +1215,7 @@ function YLExtInit() {
 		var statusContent = $('#StatusView .article-content')
 		statusContent.empty()
 		if (!gameVersion) {
-			$("<div class='noMods'>").appendTo(statusContent).text("Нет данных о версии игры. Скорее всего, русификатор недоступен для вашей версии игры.")
+			$("<div class='noMods'>").appendTo(statusContent).text(statusLocale["StatusNoGameVersionFiles"])
 		}
 		else {// if (gameVersion.length) {
 			function appendFiles(container$, files, groupIdx) {
@@ -1205,7 +1223,7 @@ function YLExtInit() {
 					var fi = files[i]
 					var tooltip = fi.Tooltip
 					var fileElement = $("<div class='fileEntry' fileidx='" + i + "'>").appendTo(container$)
-					if (fi.IsOK) {
+					if (fi.IsHashOk) {
 						fileElement.addClass("fileok")
 						statusText = statusLocale["StatusListDownloadedFile"]
 						if (!tooltip) {
@@ -1216,51 +1234,56 @@ function YLExtInit() {
 					else {
 						var options;
 						if (!tooltip) {
-							if (fi.Importance === 1 && fi.IsPresent) {
+							if (!isStrictHash(fi) && fi.IsPresent) {
 								tooltip = statusLocale["StatusListRecommendedFileTooltip"]
 							}
-							else if (fi.Importance > 1) {
-								tooltip = statusLocale["StatusListOptionalFileTooltip"]
+							else if (isMandatory(fi)) {
+								tooltip = statusLocale["StatusListRequiredFileTooltip"]
 							}
 							else {
-								tooltip = statusLocale["StatusListRequiredFileTooltip"]
+								tooltip = statusLocale["StatusListOptionalFileTooltip"]
 							}
 						}
 						if (fi.Url == '-') {
 							if (fi.IsPresent) {
-								if (fi.Importance > 0) {
-									options = [{ Text: statusLocale['StatusComboboxManualOnly'], Value: false }]
-								}
-								else {
+								if (isStrictHash(fi)) {
 									options = [{ Text: statusLocale['StatusComboboxManualUpdateRequired'], Value: false }]
 								}
 							}
-							else if (fi.Importance > 1) {
-								options = [{ Text: statusLocale['StatusComboboxManualOnly'], Value: false }]
+							else if (isMandatory(fi)) {
+								options = [{ Text: statusLocale['StatusComboboxManualInstallRequired'], Value: false }]
 							}
 							else {
-								options = [{ Text: statusLocale['StatusComboboxManualInstallRequired'], Value: false }]
+								options = [{ Text: statusLocale['StatusComboboxManualOnly'], Value: false }]
 							}
 						}
 						else if (fi.IsPresent) {
-							if (fi.Importance > 0) {
-								options = [{ Text: statusLocale['StatusComboboxUpdate'], Value: true }, { Text: statusLocale['StatusComboboxNoUpdate'], Value: false }]
+							if (isStrictHash(fi)) {
+								options = [{ Text: statusLocale['StatusComboboxUpdateForced'], Value: true }]
 							}
 							else {
-								options = [{ Text: statusLocale['StatusComboboxUpdateForced'], Value: true }]
+								options = [
+									{ Text: statusLocale['StatusComboboxUpdate'], Value: true }
+									, { Text: statusLocale['StatusComboboxNoUpdate'], Value: false }
+								]
 							}
 						}
 						else {
-							if (fi.Importance > 1) {
-								options = [{ Text: statusLocale['StatusComboboxDownload'], Value: true }, { Text: statusLocale['StatusComboboxNoDownload'], Value: false }]
-							}
-							else {
+							if (isMandatory(fi)) {
 								options = [{ Text: statusLocale['StatusComboboxDownloadForced'], Value: true }]
 							}
+							else {
+								options = [
+									{ Text: statusLocale['StatusComboboxDownload'], Value: true }
+									, { Text: statusLocale['StatusComboboxNoDownload'], Value: false }
+								]
+							}
 						}
-						var fileActionCombobox = $("<div class='fileActionCombobox' fileidx='" + i + "' groupidx='" + groupIdx + "'>").appendTo(fileElement)
+						var fileActionCombobox = $(
+							"<div class='fileActionCombobox' fileidx='" + i + "' groupidx='" + groupIdx + "'>"
+						).appendTo(fileElement)
 
-						var cb = new StyledComboBox(fi.IsCheckedToDl ? 0 : 1, options)
+						var cb = new StyledComboBox(fi.IsCheckedToDl ? 0 : (options.length - 1), options)
 						cb.Container.appendTo(fileActionCombobox)
 						if (options.length < 2) {
 							cb.Disable()

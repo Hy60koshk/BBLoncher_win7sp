@@ -71,7 +71,7 @@ namespace YobaLoncher {
 			gamePath.BackColor = Color.FromArgb(32, 33, 34);
 			gamePath.BorderStyle = BorderStyle.None;
 			gamePath.ForeColor = Color.White;
-			YU.assertLucida(gamePath);
+			YU.AssertLucida(gamePath);
 
 			YobaButton browseButton = new YobaButton();
 			browseButton.Location = new Point(385, 44);

@@ -253,22 +253,22 @@ namespace YobaLoncher {
 			}
 			if (styleInfo.CustomStyle) {
 				FlatStyle = FlatStyle.Flat;
-				ForeColor = YU.colorFromString(styleInfo.Color, BtnColors.Fore);
-				FlatAppearance.BorderColor = YU.colorFromString(styleInfo.BorderColor, BtnColors.Border);
+				ForeColor = YU.ColorFromString(styleInfo.Color, BtnColors.Fore);
+				FlatAppearance.BorderColor = YU.ColorFromString(styleInfo.BorderColor, BtnColors.Border);
 			}
-			if (styleInfo.BgImage != null && YU.stringHasText(styleInfo.BgImage.Path)) {
+			if (styleInfo.BgImage != null && YU.StringHasText(styleInfo.BgImage.Path)) {
 				styleInfo.BgImage.ImageLayout = ImageLayout.Stretch;
-				if (YU.stringHasText(styleInfo.BgImage.Layout)) {
+				if (YU.StringHasText(styleInfo.BgImage.Layout)) {
 					if (Enum.TryParse(styleInfo.BgImage.Layout, out ImageLayout layout)) {
 						styleInfo.BgImage.ImageLayout = layout;
 					}
 				}
 				BackgroundImageLayout = styleInfo.BgImage.ImageLayout;
-				BackgroundImage = YU.readBitmap(PreloaderForm.IMGPATH + styleInfo.BgImage.Path);
+				BackgroundImage = YU.ReadBitmap(PreloaderForm.IMGPATH + styleInfo.BgImage.Path);
 
-				if (styleInfo.BgImageClick != null && YU.stringHasText(styleInfo.BgImageClick.Path)) {
+				if (styleInfo.BgImageClick != null && YU.StringHasText(styleInfo.BgImageClick.Path)) {
 					styleInfo.BgImageClick.ImageLayout = ImageLayout.Stretch;
-					if (YU.stringHasText(styleInfo.BgImageClick.Layout)) {
+					if (YU.StringHasText(styleInfo.BgImageClick.Layout)) {
 						if (Enum.TryParse(styleInfo.BgImageClick.Layout, out ImageLayout layout)) {
 							styleInfo.BgImageClick.ImageLayout = layout;
 						}
@@ -276,9 +276,9 @@ namespace YobaLoncher {
 					MouseDown += YobaButtonAbs_MouseDownBGChange;
 					MouseUp += YobaButtonAbs_MouseUpBGChange;
 				}
-				if (styleInfo.BgImageHover != null && YU.stringHasText(styleInfo.BgImageHover.Path)) {
+				if (styleInfo.BgImageHover != null && YU.StringHasText(styleInfo.BgImageHover.Path)) {
 					styleInfo.BgImageHover.ImageLayout = ImageLayout.Stretch;
-					if (YU.stringHasText(styleInfo.BgImageHover.Layout)) {
+					if (YU.StringHasText(styleInfo.BgImageHover.Layout)) {
 						if (Enum.TryParse(styleInfo.BgImageHover.Layout, out ImageLayout layout)) {
 							styleInfo.BgImageHover.ImageLayout = layout;
 						}
@@ -292,25 +292,25 @@ namespace YobaLoncher {
 		private void YobaButtonAbs_MouseLeaveBGChange(object sender, EventArgs e) {
 			MouseHoverState = false;
 			BackgroundImageLayout = StyleInfo.BgImage.ImageLayout;
-			BackgroundImage = YU.readBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImage.Path);
+			BackgroundImage = YU.ReadBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImage.Path);
 		}
 		private void YobaButtonAbs_MouseHoverBGChange(object sender, EventArgs e) {
 			MouseHoverState = true;
 			BackgroundImageLayout = StyleInfo.BgImageHover.ImageLayout;
-			BackgroundImage = YU.readBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImageHover.Path);
+			BackgroundImage = YU.ReadBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImageHover.Path);
 		}
 		private void YobaButtonAbs_MouseDownBGChange(object sender, EventArgs e) {
 			BackgroundImageLayout = StyleInfo.BgImageClick.ImageLayout;
-			BackgroundImage = YU.readBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImageClick.Path);
+			BackgroundImage = YU.ReadBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImageClick.Path);
 		}
 		private void YobaButtonAbs_MouseUpBGChange(object sender, EventArgs e) {
 			if (MouseHoverState) {
 				BackgroundImageLayout = StyleInfo.BgImageHover.ImageLayout;
-				BackgroundImage = YU.readBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImageHover.Path);
+				BackgroundImage = YU.ReadBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImageHover.Path);
 			}
 			else {
 				BackgroundImageLayout = StyleInfo.BgImage.ImageLayout;
-				BackgroundImage = YU.readBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImage.Path);
+				BackgroundImage = YU.ReadBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImage.Path);
 			}
 		}
 	}
@@ -327,12 +327,12 @@ namespace YobaLoncher {
 		public override void ApplyUIStyles(UIElement styleInfo) {
 			base.ApplyUIStyles(styleInfo);
 
-			YU.setFont(this, styleInfo.Font, styleInfo.FontSize);
+			YU.SetFont(this, styleInfo.Font, styleInfo.FontSize);
 			if (styleInfo.CustomStyle) {
-				BackColor = YU.colorFromString(styleInfo.BgColor, BtnColors.Back);
+				BackColor = YU.ColorFromString(styleInfo.BgColor, BtnColors.Back);
 				FlatAppearance.BorderSize = styleInfo.BorderSize > -1 ? styleInfo.BorderSize : 0;
-				FlatAppearance.MouseOverBackColor = YU.colorFromString(styleInfo.BgColorHover, BtnColors.MouseOver);
-				FlatAppearance.MouseDownBackColor = YU.colorFromString(styleInfo.BgColorDown, BtnColors.MouseDown);
+				FlatAppearance.MouseOverBackColor = YU.ColorFromString(styleInfo.BgColorHover, BtnColors.MouseOver);
+				FlatAppearance.MouseDownBackColor = YU.ColorFromString(styleInfo.BgColorDown, BtnColors.MouseDown);
 			}
 		}
 	}
@@ -381,14 +381,14 @@ namespace YobaLoncher {
 		public override void ApplyUIStyles(UIElement styleInfo) {
 			base.ApplyUIStyles(styleInfo);
 
-			if (YU.stringHasText(styleInfo.FontSize)) {
-				YU.setFont(this, styleInfo.Font, styleInfo.FontSize);
+			if (YU.StringHasText(styleInfo.FontSize)) {
+				YU.SetFont(this, styleInfo.Font, styleInfo.FontSize);
 			}
 			if (styleInfo.CustomStyle) {
-				BackColor = YU.colorFromString(styleInfo.BgColor, Color.FromArgb(62, 63, 64));
+				BackColor = YU.ColorFromString(styleInfo.BgColor, Color.FromArgb(62, 63, 64));
 				FlatAppearance.BorderSize = styleInfo.BorderSize > -1 ? styleInfo.BorderSize : 0;
-				FlatAppearance.MouseOverBackColor = YU.colorFromString(styleInfo.BgColorHover, BtnColors.Back);
-				FlatAppearance.MouseDownBackColor = YU.colorFromString(styleInfo.BgColorDown, BtnColors.MouseDown);
+				FlatAppearance.MouseOverBackColor = YU.ColorFromString(styleInfo.BgColorHover, BtnColors.Back);
+				FlatAppearance.MouseDownBackColor = YU.ColorFromString(styleInfo.BgColorDown, BtnColors.MouseDown);
 			}
 		}
 	}

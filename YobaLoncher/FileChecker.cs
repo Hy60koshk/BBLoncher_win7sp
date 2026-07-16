@@ -45,17 +45,17 @@ namespace YobaLoncher {
 			foreach (FileInfo file in files) {
 				string fullPath = root + file.Path;
 				file.IsPresent = false;
-				file.IsOK = false;
+				file.IsHashOk = false;
 				if (fileDates.ContainsKey(file.Path)) {
 					if (File.Exists(fullPath)) {
 						file.IsPresent = true;
 						if (file.Hashes == null || file.Hashes.Count == 0) {
-							file.IsOK = true;
+							file.IsHashOk = true;
 						}
 						else {
 							string filedate = YU.GetFileDateString(fullPath);
 							if (fileDates[file.Path].Equals(filedate) && file.IsHashAcceptable(fileDateHashes[file.Path])) {
-								file.IsOK = true;
+								file.IsHashOk = true;
 							}
 							else {
 								await CheckExistingFileOnline(root, file, result);
@@ -79,10 +79,10 @@ namespace YobaLoncher {
 		}
 
 		private static async Task CheckExistingFileOnline(string root, FileInfo file, CheckResult result) {
-			if (YU.stringHasText(file.Url)) {
+			if (YU.StringHasText(file.Url)) {
 				string md5;
-				file.IsOK = CheckFileMD5(root, file, out md5);
-				if (file.IsOK) {
+				file.IsHashOk = CheckFileMD5(root, file, out md5);
+				if (file.IsHashOk) {
 					string filedate = YU.GetFileDateString(root, file.Path);
 					LauncherConfig.FileDates[file.Path] = filedate;
 					LauncherConfig.FileDateHashes[file.Path] = md5;

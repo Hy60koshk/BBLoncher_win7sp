@@ -35,6 +35,8 @@ namespace YobaLoncher {
 		public PreloaderForm(MainForm oldMainForm) : this(oldMainForm, false) { }
 
 		public PreloaderForm(MainForm oldMainForm, bool preventInit) {
+			YU.Log("\nLaunched: " + Program.VersionInfoShort, 0);
+
 			InitializeComponent();
 			preventInit_ = preventInit;
 			oldMainForm_ = oldMainForm;
@@ -42,7 +44,7 @@ namespace YobaLoncher {
 			
 			if (File.Exists(BG_FILE)) {
 				try {
-					this.BackgroundImage = YU.readBitmap(BG_FILE);
+					this.BackgroundImage = YU.ReadBitmap(BG_FILE);
 				}
 				catch {
 					loadingLabelError.Text = Locale.Get("CannotSetBackground");
@@ -50,7 +52,7 @@ namespace YobaLoncher {
 			}
 			if (File.Exists(ICON_FILE)) {
 				try {
-					Bitmap bm = YU.readBitmap(ICON_FILE);
+					Bitmap bm = YU.ReadBitmap(ICON_FILE);
 					if (bm != null) {
 						Icon = Icon.FromHandle(bm.GetHicon());
 					}
@@ -164,7 +166,7 @@ namespace YobaLoncher {
 		}
 
 		private async Task<bool> assertFile(FileInfo fi, string dir) {
-			if (fi != null && YU.stringHasText(fi.Path) && YU.stringHasText(fi.Url)) {
+			if (fi != null && YU.StringHasText(fi.Path) && YU.StringHasText(fi.Url)) {
 				fi.NormalizeHashes();
 				if (!FileChecker.CheckFileMD5(dir, fi)) {
 					YU.Log("Preloader > Downloading file: " + fi.Url, 1);
@@ -176,7 +178,7 @@ namespace YobaLoncher {
 			return false;
 		}
 		private async Task<bool> assertFile(FileInfo fi, string dir, string targetPath) {
-			if (fi != null && YU.stringHasText(fi.Path) && YU.stringHasText(fi.Url)) {
+			if (fi != null && YU.StringHasText(fi.Path) && YU.StringHasText(fi.Url)) {
 				fi.NormalizeHashes();
 				if (!FileChecker.CheckFileMD5(dir, fi)) {
 					Directory.CreateDirectory(dir);
@@ -187,13 +189,13 @@ namespace YobaLoncher {
 			return false;
 		}
 		private bool assertOfflineFile(FileInfo fi, string dir) {
-			if (fi != null && YU.stringHasText(fi.Path) && File.Exists(dir + fi.Path)) {
+			if (fi != null && YU.StringHasText(fi.Path) && File.Exists(dir + fi.Path)) {
 				return true;
 			}
 			return false;
 		}
 		private bool assertOfflineFile(FileInfo fi, string dir, string targetPath) {
-			if (fi != null && YU.stringHasText(fi.Path) && File.Exists(targetPath)) {
+			if (fi != null && YU.StringHasText(fi.Path) && File.Exists(targetPath)) {
 				return true;
 			}
 			return false;
@@ -240,7 +242,7 @@ namespace YobaLoncher {
 		}
 
 		private string showPathSelection(string path) {
-			if (!YU.stringHasText(path)) {
+			if (!YU.StringHasText(path)) {
 				path = Program.GamePath;
 			}
 			GamePathSelectForm gamePathSelectForm = new GamePathSelectForm();
@@ -278,7 +280,7 @@ namespace YobaLoncher {
 			string path = LauncherConfig.GameDir;
 			if (path is null) {
 				path = getSteamGameInstallPath();
-				if (path is null && YU.stringHasText(Program.LoncherSettings.SteamGameFolder)) {
+				if (path is null && YU.StringHasText(Program.LoncherSettings.SteamGameFolder)) {
 					List<string> steampaths = getSteamLibraryPaths();
 					for (int i = 0; i < steampaths.Count; i++) {
 						string spath = steampaths[i] + Program.LoncherSettings.SteamGameFolder;
@@ -394,7 +396,7 @@ namespace YobaLoncher {
 					try {
 						if (Program.LoncherSettings.RAW.Localization != null) {
 							FileInfo locInfo = Program.LoncherSettings.RAW.Localization;
-							if (YU.stringHasText(locInfo.Url)) {
+							if (YU.StringHasText(locInfo.Url)) {
 								locInfo.Path = LOCPATH;
 								if (!FileChecker.CheckFileMD5("", locInfo)) {
 									string loc = await wc_.DownloadStringTaskAsync(locInfo.Url);
@@ -446,11 +448,11 @@ namespace YobaLoncher {
 							}
 							verIdx--;
 						}
-						if (YU.stringHasText(loncherHash)) {
+						if (YU.StringHasText(loncherHash)) {
 							string selfHash = FileChecker.GetFileMD5(Application.ExecutablePath);
 
 							if (!loncherHash.Equals(selfHash, StringComparison.OrdinalIgnoreCase)) {
-								if (YU.stringHasText(loncherUrl)) {
+								if (YU.StringHasText(loncherUrl)) {
 									string newLoncherPath = Application.ExecutablePath + ".new";
 									string appname = Application.ExecutablePath;
 									appname = appname.Substring(appname.LastIndexOf('\\') + 1);
@@ -487,7 +489,7 @@ namespace YobaLoncher {
 					LauncherData.LauncherDataRaw launcherDataRaw = Program.LoncherSettings.RAW;
 					try {
 						if (await assertFile(launcherDataRaw.Icon, IMGPATH, ICON_FILE)) {
-							Bitmap bm = YU.readBitmap(ICON_FILE);
+							Bitmap bm = YU.ReadBitmap(ICON_FILE);
 							if (bm != null) {
 								Program.LoncherSettings.Icon = Icon.FromHandle(bm.GetHicon());
 								this.Icon = Program.LoncherSettings.Icon;
@@ -497,7 +499,7 @@ namespace YobaLoncher {
 							Program.LoncherSettings.Icon = this.Icon;
 						}
 						if (await assertFile(launcherDataRaw.PreloaderBackground, IMGPATH, BG_FILE)) {
-							this.BackgroundImage = YU.readBitmap(BG_FILE);
+							this.BackgroundImage = YU.ReadBitmap(BG_FILE);
 						}
 						bool gotRandomBG = false;
 						if (launcherDataRaw.RandomBackgrounds != null && launcherDataRaw.RandomBackgrounds.Count > 0) {
@@ -507,7 +509,7 @@ namespace YobaLoncher {
 								if (await assertFile(rbgi.Background, IMGPATH)) {
 									totalRoll += rbgi.Chance;
 									if (totalRoll > randomBGRoll) {
-										Program.LoncherSettings.Background = YU.readBitmap(IMGPATH + rbgi.Background.Path);
+										Program.LoncherSettings.Background = YU.ReadBitmap(IMGPATH + rbgi.Background.Path);
 										Program.LoncherSettings.BackgroundPath = IMGPATH + rbgi.Background.Path;
 										gotRandomBG = true;
 										break;
@@ -516,7 +518,7 @@ namespace YobaLoncher {
 							}
 						}
 						if (!gotRandomBG && await assertFile(launcherDataRaw.Background, IMGPATH)) {
-							Program.LoncherSettings.Background = YU.readBitmap(IMGPATH + launcherDataRaw.Background.Path);
+							Program.LoncherSettings.Background = YU.ReadBitmap(IMGPATH + launcherDataRaw.Background.Path);
 							Program.LoncherSettings.BackgroundPath = IMGPATH + launcherDataRaw.Background.Path;
 						}
 
@@ -560,7 +562,7 @@ namespace YobaLoncher {
 											string status = "none";
 											string src = Program.LoncherSettings.Fonts[key];
 											string filename = FNTPATH + key;
-											if (YU.stringHasText(src)) {
+											if (YU.StringHasText(src)) {
 												await loadFile(src, filename);
 												if (File.Exists(filename)) {
 													status = "local";
@@ -719,17 +721,17 @@ namespace YobaLoncher {
 						YobaDialog.ShowDialog(Locale.Get("CannotGetLocaleFile") + ":\r\n" + ex.Message);
 					}
 					if (assertOfflineFile(launcherDataRaw.Background, IMGPATH)) {
-						Program.LoncherSettings.Background = YU.readBitmap(IMGPATH + launcherDataRaw.Background.Path);
+						Program.LoncherSettings.Background = YU.ReadBitmap(IMGPATH + launcherDataRaw.Background.Path);
 						Program.LoncherSettings.BackgroundPath = IMGPATH + launcherDataRaw.Background.Path;
 					}
 					if (assertOfflineFile(launcherDataRaw.Icon, IMGPATH, ICON_FILE)) {
-						Bitmap bm = YU.readBitmap(IMGPATH + launcherDataRaw.Icon.Path);
+						Bitmap bm = YU.ReadBitmap(IMGPATH + launcherDataRaw.Icon.Path);
 						if (bm != null) {
 							Program.LoncherSettings.Icon = Icon.FromHandle(bm.GetHicon());
 						}
 					}
 					if (assertOfflineFile(launcherDataRaw.PreloaderBackground, IMGPATH, BG_FILE)) {
-						this.BackgroundImage = YU.readBitmap(IMGPATH + launcherDataRaw.PreloaderBackground.Path);
+						this.BackgroundImage = YU.ReadBitmap(IMGPATH + launcherDataRaw.PreloaderBackground.Path);
 					}
 					if (Program.LoncherSettings.Icon == null) {
 						Program.LoncherSettings.Icon = this.Icon;

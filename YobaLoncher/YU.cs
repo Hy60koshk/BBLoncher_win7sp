@@ -1,27 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Text;
 using System.IO;
-using System.Linq;
-using System.Net;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
 namespace YobaLoncher {
 	static class YU {
 
-		public static bool stringHasText(string s) {
+		public static bool StringHasText(string s) {
 			return s != null && s.Length > 0;
 		}
 
 		private static string[] bytePows = new string[] { "B", "KB", "MB", "GB", "TB", "PB", "ЁB" };
 
-		public static string formatFileSize(double size) {
+		public static string FormatFileSize(double size) {
 			int pow = 0;
 			while (size > 1024) {
 				size /= 1024;
@@ -34,6 +29,12 @@ namespace YobaLoncher {
 			if (LauncherConfig.LoggingLevel >= logLevel) {
 				File.AppendAllText(Program.LoncherDataPath + "log.txt", DateTime.Now.ToString("yyyy.dd.MM HH:mm:ss") + " | " + text + "\r\n");
 			}
+		}
+		public static void LogException(Exception ex) {
+			LogException(ex, 0);
+		}
+		public static void LogException(Exception ex, int logLevel) {
+			Log(String.Format("Error: {0}\nTarget: {1}\nStacktrace:\n{2}\n", ex.Message, ex.TargetSite, ex.StackTrace), logLevel);
 		}
 
 		public static string GetFileDateString(string fullpath) {
@@ -59,22 +60,22 @@ namespace YobaLoncher {
 			});
 		}
 
-		public static Bitmap readBitmap(string path) {
+		public static Bitmap ReadBitmap(string path) {
 			FileStream ffs = File.OpenRead(path);
 			Bitmap bmp = new Bitmap(ffs);
 			ffs.Close();
 			return bmp;
 		}
 
-		public static void setFont(Control comp, string fontName, string fontSize) {
+		public static void SetFont(Control comp, string fontName, string fontSize) {
 			float fs = 12;
-			if (stringHasText(fontSize)) {
+			if (StringHasText(fontSize)) {
 				if (!float.TryParse(fontSize, out fs)) {
 					fs = 12;
 				}
 			}
 			Font font;
-			if (stringHasText(fontName)) {
+			if (StringHasText(fontName)) {
 				font = new Font(fontName, fs, FontStyle.Regular, GraphicsUnit.Pixel);
 				if (font.Name != fontName) {
 					if (Program.LoncherSettings.Fonts[fontName] == "local") {
@@ -93,7 +94,7 @@ namespace YobaLoncher {
 			comp.Font = font;
 		}
 
-		public static void assertLucida(Control component) {
+		public static void AssertLucida(Control component) {
 			if (component.Font.Name != "Lucida Sans Unicode") {
 				try {
 					PrivateFontCollection pfc = new PrivateFontCollection();
@@ -110,8 +111,8 @@ namespace YobaLoncher {
 			}
 		}
 
-		public static Color colorFromString(string str, Color def) {
-			if (!stringHasText(str)) {
+		public static Color ColorFromString(string str, Color def) {
+			if (!StringHasText(str)) {
 				return def;
 			}
 			try {
@@ -191,6 +192,7 @@ namespace YobaLoncher {
 				ErrorAndKill(msg, ex);
 			}
 			else {
+				LogException(ex);
 				Application.Exit();
 			}
 		}

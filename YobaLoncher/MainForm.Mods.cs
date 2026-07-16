@@ -20,7 +20,7 @@ namespace YobaLoncher {
 				return fileInfo.Path + " : " + md5;
 			}
 
-			fileInfo.IsOK = true;
+			fileInfo.IsHashOk = true;
 			LauncherConfig.FileDates[fileInfo.Path] = YU.GetFileDateString(filename);
 			LauncherConfig.FileDateHashes[fileInfo.Path] = md5;
 			return null;
@@ -36,7 +36,7 @@ namespace YobaLoncher {
 				for (int i = 0; i < files.Count; i++) {
 					UpdateProgressBar(progressStep * i);
 					FileInfo fi = files[i];
-					if (fi.IsOK) {
+					if (fi.IsHashOk) {
 						continue;
 					}
 					filename = ThePath + fi.Path.Replace('/', '\\');
@@ -85,7 +85,7 @@ namespace YobaLoncher {
 			if (currentMod_ != null) {
 				if (currentFile_ is null) {
 					LinkedList<FileInfo> modFileList = new LinkedList<FileInfo>(
-						currentMod_.Value.FilesForUpdate.FindAll(fi => !fi.IsOK && fi.HasValidInfo)
+						currentMod_.Value.FilesForUpdate.FindAll(fi => !fi.IsHashOk && fi.HasValidInfo)
 					);
 					if (modFileList.Count > 0) {
 						currentFile_ = modFileList.First;

@@ -128,7 +128,7 @@ namespace YobaLoncher {
 			public void UncheckFile(int groupidx, int fileidx) {
 				try {
 					FileInfo fi = Program.LoncherSettings.GameVersion.FileGroups[groupidx].Files[fileidx];
-					if (fi != null && fi.Importance > 0) {
+					if (fi != null && !fi.IsMandatory) {
 						fi.IsCheckedToDl = false;
 						Form.CheckReady();
 					}
@@ -282,7 +282,7 @@ namespace YobaLoncher {
 					foreach (FileInfo fi in files) {
 						size += fi.Size;
 					}
-					if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("ModActivationFilesAreOutdated"), mi.VersionedName, YU.formatFileSize(size)), YobaDialog.YesNoBtns)) {
+					if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("ModActivationFilesAreOutdated"), mi.VersionedName, YU.FormatFileSize(size)), YobaDialog.YesNoBtns)) {
 						if (Form.modsToUpdate_ is null) {
 							Form.modsToUpdate_ = new LinkedList<ModInfo>();
 							Form.modsToUpdate_.AddLast(mi);
@@ -314,11 +314,11 @@ namespace YobaLoncher {
 					await FileChecker.CheckFiles(mi.LatestVersion.Files);
 				}
 				foreach (FileInfo fi in mi.LatestVersion.Files) {
-					if (!fi.IsOK) {
+					if (!fi.IsHashOk) {
 						size += fi.Size;
 					}
 				}
-				string modSize = YU.formatFileSize(size);
+				string modSize = YU.FormatFileSize(size);
 				if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("AreYouSureInstallMod"), mi.VersionedName, modSize), YobaDialog.YesNoBtns)) {
 					if (Form.modsToUpdate_ is null) {
 						Form.modsToUpdate_ = new LinkedList<ModInfo>();

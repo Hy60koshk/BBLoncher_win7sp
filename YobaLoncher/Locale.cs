@@ -211,6 +211,7 @@ namespace YobaLoncher {
 			, { "CannotGetFonts", "Cannot get Fonts" }
 			, { "CannotGetAssets", "Cannot get Assets" }
 			, { "CannotCheckFiles", "Cannot check files" }
+			, { "CannotInitMainWindow", "Cannot initialize main window" }
 			, { "MultipleFileBlocksForSingleGameVersion", "Multiple file blocks for single game version: {0}" }
 			, { "CannotParseConfig", "Cannot access or parse config" }
 			, { "CannotLoadIcon", "Cannot load the icon" }
@@ -226,6 +227,9 @@ namespace YobaLoncher {
 			, { "ShortcutAlreadyExists", "Loncher shortcut already exists!" }
 			, { "ShortcutCreatedSuccessfully", "Loncher shortcut created successfully!" }
 			, { "NewFeatureCompactMods", "New feature: Compact mods mode.\nShall we enable it now?\n(You can switch it on or off at any time through launcher settings menu)" }
+			, { "MainBrowserIsNull", "Critical error: Main Browser component is not initialized." }
+			, { "IE_NullFileInfoToUpload1", "Impossible error: Null file is set to upload (1)." }
+			, { "IE_NullFileInfoToUpload2", "Impossible error: Null file is set to upload (2)." }
 		};
 	}
 }

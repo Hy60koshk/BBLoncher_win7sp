@@ -26,7 +26,7 @@ namespace YobaLoncher {
 			style |= NativeWinAPI.WS_EX_COMPOSITED;
 			NativeWinAPI.SetWindowLong(this.Handle, NativeWinAPI.GWL_EXSTYLE, style);
 
-			YU.assertLucida(textBox1);
+			YU.AssertLucida(textBox1);
 
 			button1.Text = Locale.Get("Browse");
 			button2.Text = Locale.Get("Proceed");

@@ -18,6 +18,13 @@ namespace YobaLoncher {
 		, FAQ = 4
 	}
 
+	public enum ImportanceEnum {
+		MandatoryExact = 0
+		, MandatoryPresent = 1
+		, OptionalExact = 2
+		, OptionalPresent = 3
+	}
+
 	public class ModCfgInfo {
 		public string Id = null;
 		public string Name;
@@ -70,7 +77,7 @@ namespace YobaLoncher {
 #if DEBUG
 		public static int LoggingLevel = 2;
 #else
-		public static int LoggingLevel = -1;
+		public static int LoggingLevel = 0;
 #endif
 		public static StartPageEnum StartPage = StartPageEnum.Status;
 		private const string CFGFILE = @"loncherData\loncher.cfg";
@@ -202,6 +209,9 @@ namespace YobaLoncher {
 										break;
 									case "logginglevel":
 										LoggingLevel = ParseIntParam(val, LoggingLevel);
+										if (LoggingLevel < 0) {
+											LoggingLevel = 0;
+										}
 										break;
 									case "zoompercent":
 										ZoomPercent = ParseIntParam(val, ZoomPercent);
@@ -359,7 +369,7 @@ namespace YobaLoncher {
 			Dictionary<string, T> partialGameVersions = new Dictionary<string, T>();
 			Dictionary<string, T> mergedGameVersions = new Dictionary<string, T>();
 			foreach (T gv in rawGameVersions) {
-				string key = YU.stringHasText((gv as GameVersion).ExeVersion) ? (gv as GameVersion).ExeVersion : "==";
+				string key = YU.StringHasText((gv as GameVersion).ExeVersion) ? (gv as GameVersion).ExeVersion : "==";
 				string[] keys = key.Split(',');
 				foreach (string k in keys) {
 					string kk = k.Trim();
@@ -400,7 +410,7 @@ namespace YobaLoncher {
 			ModMigrations = raw_.ModMigrations;
 			if (raw_.Mods2 != null && raw_.Mods2.Count > 0) {
 				foreach (RawModInfo rmi in raw_.Mods2) {
-					if (YU.stringHasText(rmi.Name) && rmi.Versions != null) {
+					if (YU.StringHasText(rmi.Name) && rmi.Versions != null) {
 						if (rmi.Versions.Count > 0) {
 							ModInfo mi = new ModInfo(rmi, ModGroups);
 							if (mi.Versions.Count > 0) {
@@ -411,7 +421,7 @@ namespace YobaLoncher {
 				}
 			}
 
-			if (YU.stringHasText(curVer)) {
+			if (YU.StringHasText(curVer)) {
 				if (GameVersions.ContainsKey(curVer)) {
 					GameVersion = GameVersions[curVer];
 				}
@@ -605,14 +615,41 @@ namespace YobaLoncher {
 		public string Description;
 		public string Tooltip;
 		public List<string> Hashes;
-		public bool IsOK = false;
+		public bool IsHashOk = false;
 		public bool IsPresent = false;
 		public bool IsDateChecked = false;
 		public string UploadAlias;
 		public uint Size = 0;
-		public int Importance = 0;
+		public ImportanceEnum Importance = ImportanceEnum.MandatoryExact;
 		public int OrderIndex = -99;
 		public bool IsCheckedToDl = false;
+
+		[JsonIgnore]
+		public bool NeedsHashCheck {
+			get {
+				return Importance == ImportanceEnum.MandatoryExact
+					|| Importance == ImportanceEnum.OptionalExact;
+			}
+		}
+		[JsonIgnore]
+		public bool IsMandatory {
+			get {
+				return Importance == ImportanceEnum.MandatoryExact
+					|| Importance == ImportanceEnum.MandatoryPresent;
+			}
+		}
+		[JsonIgnore]
+		public bool NeedsDL {
+			get {
+				if (IsHashOk) {
+					return false;
+				}
+				return Importance == ImportanceEnum.MandatoryExact
+					|| (Importance == ImportanceEnum.MandatoryPresent && !IsPresent)
+					|| (Importance == ImportanceEnum.OptionalExact && IsPresent);
+			}
+		}
+
 		[JsonIgnore]
 		public List<ModInfo> UsedByMods = new List<ModInfo>();
 
@@ -627,7 +664,7 @@ namespace YobaLoncher {
 		public bool HasValidInfo {
 			get {
 				return Url != null && Path != null && Url.Length > 0 && Path.Length > 0
-					&& (Importance > 0 || (Hashes != null && Hashes.Count > 0));
+					&& (!NeedsHashCheck || (Hashes != null && Hashes.Count > 0));
 			}
 		}
 		[JsonIgnore]
@@ -639,7 +676,7 @@ namespace YobaLoncher {
 		[JsonIgnore]
 		public bool IsUrlAvailable {
 			get {
-				return YU.stringHasText(Url) && !Url.Equals("-");
+				return YU.StringHasText(Url) && !Url.Equals("-");
 			}
 		}
 
@@ -657,7 +694,7 @@ namespace YobaLoncher {
 			return false;
 		}
 		public bool IsHashAcceptable(string hash) {
-			if (Importance > 0) {
+			if (!NeedsHashCheck) {
 				return true;
 			}
 			if (HasHashes) {
@@ -681,12 +718,7 @@ namespace YobaLoncher {
 		}
 
 		public void ResetCheckedToDl() {
-			if (IsOK) {
-				IsCheckedToDl = false;
-			}
-			else if (Importance == 0 || (Importance == 1 && !IsPresent)) {
-				IsCheckedToDl = true;
-			}
+			IsCheckedToDl = NeedsDL;
 		}
 	}
 	class BgImageInfo : FileInfo {
@@ -930,7 +962,7 @@ namespace YobaLoncher {
 			IsHidden = rmi.IsHidden;
 			GroupId = rmi.GroupId;
 			HasExecutable = rmi.HasExecutable;
-			Group = YU.stringHasText(rmi.GroupId) ? ModGroups.Find(g => g.Id == rmi.GroupId) : null;
+			Group = YU.StringHasText(rmi.GroupId) ? ModGroups.Find(g => g.Id == rmi.GroupId) : null;
 			Versions = rmi.Versions.Where(rv => rv.Files.Count > 0).Select(rv => new ModVersion(rv, this)).ToList();
 			Versions.Sort((mv1, mv2) => (mv2.VersionOrder - mv1.VersionOrder));
 		}
@@ -1214,7 +1246,7 @@ namespace YobaLoncher {
 					}
 					else {
 						File.Delete(prefix + fi.Path);
-						fi.IsOK = false;
+						fi.IsHashOk = false;
 						LauncherConfig.FileDates.Remove(fi.Path);
 						LauncherConfig.FileDateHashes.Remove(fi.Path);
 					}
