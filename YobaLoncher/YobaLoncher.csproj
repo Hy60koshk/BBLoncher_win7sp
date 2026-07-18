@@ -110,6 +110,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DownloadProgressTracker.cs" />
+    <Compile Include="DraggingPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="FileChecker.cs" />
     <Compile Include="GamePathSelectForm.cs">
       <SubType>Form</SubType>
@@ -119,9 +122,7 @@
     </Compile>
     <Compile Include="LauncherData.cs" />
     <Compile Include="Locale.cs" />
-    <Compile Include="MainForm.Mods.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="MainForm.Mods.cs" />
     <Compile Include="PngIconConverter.cs" />
     <Compile Include="PreloaderForm.cs">
       <SubType>Form</SubType>
@@ -145,18 +146,14 @@
     <Compile Include="SettingsDialog.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="WebModInfo.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="WebModInfo.cs" />
     <Compile Include="YobaDialog.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="YobaDialog.Designer.cs">
       <DependentUpon>YobaDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="YobaWebController.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="YobaWebController.cs" />
     <Compile Include="YU.cs" />
     <EmbeddedResource Include="GamePathSelectForm.resx">
       <DependentUpon>GamePathSelectForm.cs</DependentUpon>

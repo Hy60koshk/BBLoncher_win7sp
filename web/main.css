@@ -195,7 +195,7 @@ h1 {
 	top: 0px;
 	right: 0px;
 	height: 24px;
-	width: 130px;
+	width: 170px;
 }
 
 .app-control-btn {
@@ -203,7 +203,7 @@ h1 {
 	height: 28px;
 	width: 41px;
 	margin-left: 1px;
-	background-size: 300% 300%;
+	background-size: 500% 300%;
 	background-clip: content-box;
 	background-image: url('images/app_btn.png');
 }
@@ -225,14 +225,32 @@ h1 {
 .app-controls .minimize:active {
 	background-position: -100% -200%;
 }
-.app-controls .close {
+.app-controls .maximize {
 	background-position: -200% 0;
 }
-.app-controls .close:hover {
+.app-controls .maximize:hover {
 	background-position: -200% -100%;
 }
-.app-controls .close:active {
+.app-controls .maximize:active {
 	background-position: -200% -200%;
+}
+.app-controls .maximize.back {
+	background-position: -300% 0;
+}
+.app-controls .maximize.back:hover {
+	background-position: -300% -100%;
+}
+.app-controls .maximize.back:active {
+	background-position: -300% -200%;
+}
+.app-controls .close {
+	background-position: -400% 0;
+}
+.app-controls .close:hover {
+	background-position: -400% -100%;
+}
+.app-controls .close:active {
+	background-position: -400% -200%;
 }
 .page {
 	left: 0;
@@ -305,16 +323,16 @@ h1 {
 	right: 8px;
 	height: 28px;
 	width: 41px;
-	background-position: -200% 0%;
-	background-size: 300% 300%;
+	background-position: -400% 0%;
+	background-size: 500% 300%;
 	background-clip: content-box;
 	background-image: url(images/app_btn.png);
 }
 .bb-dialog-closeBtn:hover {
-	background-position: -200% -100%;
+	background-position: -400% -100%;
 }
 .bb-dialog-closeBtn:active {
-	background-position: -200% -200%;
+	background-position: -400% -200%;
 }
 
 .bb-dialog.gallery .bb-dialog-closeBtn {

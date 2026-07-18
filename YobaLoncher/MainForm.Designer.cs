@@ -23,10 +23,11 @@
 		/// the contents of this method with the code editor.
 		/// </summary>
 		private void InitializeComponent() {
-			this.draggingPanel = new DraggingPanel();
+			this.draggingPanel = new DraggingPanel<MainForm>();
 			this.closeButton = new YobaLoncher.YobaCloseButton();
 			this.helpButton = new YobaLoncher.YobaCloseButton();
 			this.minimizeButton = new YobaLoncher.YobaCloseButton();
+			this.maximizeButton = new YobaLoncher.YobaCloseButton();
 			this.refreshButton = new YobaLoncher.YobaButton();
 			this.mainBrowser = new System.Windows.Forms.WebBrowser();
 			this.SuspendLayout();
@@ -38,7 +39,9 @@
 			this.draggingPanel.Margin = new System.Windows.Forms.Padding(0);
 			this.draggingPanel.Name = "draggingPanel";
 			this.draggingPanel.TabIndex = 103;
-			this.draggingPanel.MouseDown += new System.Windows.Forms.MouseEventHandler(this.draggingPanel_MouseDown);
+			this.draggingPanel.AddDragging(this);
+			//this.draggingPanel.MouseDown += new System.Windows.Forms.MouseEventHandler(this.draggingPanel_MouseDown);
+			//this.draggingPanel.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.draggingPanel_DoubleClick);
 			this.closeButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
 			// 
 			// closeButton
@@ -69,7 +72,7 @@
 			this.helpButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
 			this.helpButton.Font = new System.Drawing.Font("Lucida Console", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(204)));
 			this.helpButton.ForeColor = System.Drawing.Color.White;
-			this.helpButton.Location = new System.Drawing.Point(690, -2);
+			this.helpButton.Location = new System.Drawing.Point(660, -2);
 			this.helpButton.Margin = new System.Windows.Forms.Padding(0);
 			this.helpButton.Name = "helpButton";
 			this.helpButton.Size = new System.Drawing.Size(32, 24);
@@ -89,7 +92,7 @@
 			this.minimizeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
 			this.minimizeButton.Font = new System.Drawing.Font("Lucida Console", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(204)));
 			this.minimizeButton.ForeColor = System.Drawing.Color.White;
-			this.minimizeButton.Location = new System.Drawing.Point(720, -2);
+			this.minimizeButton.Location = new System.Drawing.Point(690, -2);
 			this.minimizeButton.Margin = new System.Windows.Forms.Padding(0);
 			this.minimizeButton.Name = "minimizeButton";
 			this.minimizeButton.Size = new System.Drawing.Size(32, 24);
@@ -98,6 +101,25 @@
 			this.minimizeButton.UseVisualStyleBackColor = false;
 			this.minimizeButton.Click += new System.EventHandler(this.minimizeButton_Click);
 			this.minimizeButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			// 
+			// maximizeButton
+			// 
+			this.maximizeButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(62)))), ((int)(((byte)(63)))), ((int)(((byte)(64)))));
+			this.maximizeButton.DialogResult = System.Windows.Forms.DialogResult.Abort;
+			this.maximizeButton.FlatAppearance.BorderColor = System.Drawing.Color.Gray;
+			this.maximizeButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(10)))), ((int)(((byte)(11)))));
+			this.maximizeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.maximizeButton.Font = new System.Drawing.Font("Lucida Console", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(204)));
+			this.maximizeButton.ForeColor = System.Drawing.Color.White;
+			this.maximizeButton.Location = new System.Drawing.Point(720, -2);
+			this.maximizeButton.Margin = new System.Windows.Forms.Padding(0);
+			this.maximizeButton.Name = "maximizeButton";
+			this.maximizeButton.Size = new System.Drawing.Size(32, 24);
+			this.maximizeButton.TabIndex = 101;
+			this.maximizeButton.Text = "_";
+			this.maximizeButton.UseVisualStyleBackColor = false;
+			this.maximizeButton.Click += new System.EventHandler(this.maximizeButton_Click);
+			this.maximizeButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			// 
 			// refreshButton
 			// 
@@ -132,8 +154,7 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(62)))), ((int)(((byte)(63)))), ((int)(((byte)(64)))));
-			this.MinimumSize = new System.Drawing.Size(780, 440);
-			this.MaximumSize = new System.Drawing.Size(1200, 800);
+			//this.MaximumSize = new System.Drawing.Size(1200, 800);
 			//this.ClientSize = new System.Drawing.Size(800, 440);
 			this.Resize += MainForm_Resize;
 			//this.ResizeEnd += MainForm_Resize;
@@ -142,6 +163,7 @@
 			this.Controls.Add(this.mainBrowser);
 			this.Controls.Add(this.closeButton);
 			this.Controls.Add(this.minimizeButton);
+			this.Controls.Add(this.maximizeButton);
 			this.Controls.Add(this.helpButton);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
 			this.Name = "MainForm";
@@ -157,9 +179,10 @@
 		#endregion
 
 		private YobaCloseButton closeButton;
+		private YobaCloseButton maximizeButton;
 		private YobaCloseButton minimizeButton;
 		private YobaCloseButton helpButton;
-		private DraggingPanel draggingPanel;
+		private DraggingPanel<MainForm> draggingPanel;
 		private YobaButton refreshButton;
 		
 		private System.Windows.Forms.WebBrowser mainBrowser;

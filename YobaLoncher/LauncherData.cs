@@ -7,7 +7,6 @@ using System.Net;
 using Newtonsoft.Json;
 using System.Windows.Forms;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
 
 namespace YobaLoncher {
 	public enum StartPageEnum {
@@ -71,6 +70,7 @@ namespace YobaLoncher {
 		public static Dictionary<string, string> FileDates = new Dictionary<string, string>();
 		public static Dictionary<string, string> FileDateHashes = new Dictionary<string, string>();
 		public static Dictionary<string, bool> NewFeaturesNotes = new Dictionary<string, bool>();
+		public static bool IsMaximized = false;
 		public static int WindowHeight = 440;
 		public static int WindowWidth = 780;
 		public static int ZoomPercent = 100;
@@ -95,6 +95,7 @@ namespace YobaLoncher {
 					, "ShowHiddenMods = " + (ShowHiddenMods ? 1 : 0)
 					, "ModsCompactMode = " + (ModsCompactMode ? 1 : 0)
 					, "lastsrvchk = " + LastSurveyId
+					, "IsMaximized = " + (IsMaximized ? 1 : 0)
 					, "windowheight = " + WindowHeight
 					, "windowwidth = " + WindowWidth
 					, "logginglevel = " + LoggingLevel
@@ -164,6 +165,9 @@ namespace YobaLoncher {
 										if (GalaxyDir != null) {
 											LaunchFromGalaxy = ParseBooleanParam(val);
 										}
+										break;
+									case "ismaximized":
+										IsMaximized = ParseBooleanParam(val);
 										break;
 									case "offlinemode":
 										StartOffline = ParseBooleanParam(val);

@@ -84,11 +84,17 @@ namespace YobaLoncher {
 			public void Minimize() {
 				Form.WindowState = FormWindowState.Minimized;
 			}
+			public void Maximize() {
+				Form.ToggleMaximized();
+			}
 			public void Help() {
 				YU.ShowHelpDialog();
 			}
 			public void Settings() {
 				Form.ShowSettingsDialog();
+			}
+			public bool IsMaximized() {
+				return Form.WindowState == FormWindowState.Maximized;
 			}
 
 			public string RetrieveBackground() {

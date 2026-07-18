@@ -150,7 +150,8 @@ YLExtInit()
 
 <div class='preloader'></div>
 <div class='app-controls'>
-	<div class='app-control-btn close' onclick="YL.AppClose()" tabindex='212'></div>
+	<div class='app-control-btn close' onclick="YL.AppClose()" tabindex='213'></div>
+	<div class='app-control-btn maximize' onclick="YL.AppMaximize()" tabindex='212'></div>
 	<div class='app-control-btn minimize' onclick="YL.AppMinimize()" tabindex='211'></div>
 	<div class='app-control-btn help' onclick="YL.AppHelp()" tabindex='210'></div>
 </div>

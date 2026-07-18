@@ -486,6 +486,7 @@ function isValidURL(str) {
 
 $(function() {
 	body$ = $(document.body)
+	maximizeBtn$ = $('.app-control-btn.maximize')
 
 	if (!document.body.classList) {
 		IE9 = true
@@ -541,6 +542,8 @@ $(function() {
 		else {
 			body$.removeClass('wide')
 		}
+		
+		maximizeBtn$.toggleClass('back', YL.IsMaximized())
 	}
 
 	var scrollableElements = []
@@ -576,7 +579,8 @@ $(function() {
 	Dialog.Init()
 	GalleryDialog.Init()
 
-	YL.UpdateAppControlsSize("130", "30")
+	var controlBtnsWidth = $('.app-controls').width()
+	YL.UpdateAppControlsSize('' + controlBtnsWidth, "30")
 	var bg = YL.RetrieveBackground()
 	document.body.style.backgroundImage = 'url("' + bg + '")'
 

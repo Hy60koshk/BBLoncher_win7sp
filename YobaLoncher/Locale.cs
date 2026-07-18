@@ -77,6 +77,7 @@ namespace YobaLoncher {
 			, { "FilesMissing", "{0} files are missing or out of date." }
 			, { "InaccessibleFilesMissing", "These (unimportant) files are missing. If you want to have the corresponding content, you ought to find them on your own (for legal reasons):[n]{0}" }
 			, { "ImportantInaccessibleFilesMissing", "These files are missing, yet you ought to find them on your own (for legal reasons):[n]{0}[n][n]Please, get them files and restart the launcher." }
+			, { "StatusNoGameVersionFiles", "No files available for your version of the game." }
 			, { "StatusListDownloadedFile", "File is OK" }
 			, { "StatusListRecommendedFile", "Existing file" }
 			, { "StatusListOptionalFile", "Optional file" }
