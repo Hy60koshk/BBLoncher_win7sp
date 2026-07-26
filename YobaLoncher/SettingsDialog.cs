@@ -1,34 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using IWshRuntimeLibrary;
 using IOFile = System.IO.File;
 using System.Runtime.InteropServices;
 using System.IO;
-using System.Diagnostics;
 
 namespace YobaLoncher {
 	class SettingsDialog : YobaDialog {
-		private readonly MainForm mainForm_;
-		private TextBox gamePath;
-		private YobaComboBox openingPanelCB;
-		private CheckBox launchViaGalaxy;
-		private CheckBox offlineMode;
-		private CheckBox closeLauncherOnLaunch;
-		private CommonOpenFileDialog folderBrowserDialog;
+		private readonly MainForm _mainForm;
+		private readonly TextBox _gamePath;
+		private readonly YobaComboBox _openingPanelCB;
+		private readonly CheckBox _launchViaGalaxy;
+		private readonly CheckBox _offlineMode;
+		private readonly CheckBox _closeLauncherOnLaunch;
+		private readonly CommonOpenFileDialog _folderBrowserDialog;
 		//private YobaButton openingPanelCB;
 
-		public string GamePath => gamePath.Text;
-		public StartPageEnum OpeningPanel => (StartPageEnum)openingPanelCB.SelectedIndex;
-		public bool LaunchViaGalaxy => launchViaGalaxy.Checked;
-		public bool OfflineMode => offlineMode.Checked;
-		public bool CloseOnLaunch => closeLauncherOnLaunch.Checked;
+		public string GamePath => _gamePath.Text;
+		public StartPageEnum OpeningPanel => (StartPageEnum)_openingPanelCB.SelectedIndex;
+		public bool LaunchViaGalaxy => _launchViaGalaxy.Checked;
+		public bool OfflineMode => _offlineMode.Checked;
+		public bool CloseOnLaunch => _closeLauncherOnLaunch.Checked;
 
-		private UninstallationRules urules_;
+		private UninstallationRules _urules;
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		extern static bool DestroyIcon(IntPtr handle);
@@ -43,12 +40,12 @@ namespace YobaLoncher {
 				, Result = DialogResult.OK
 			}
 		}) {
-			mainForm_ = mainForm;
+			_mainForm = mainForm;
 			Text = Locale.Get("SettingsTitle");
 
 			SuspendLayout();
 
-			folderBrowserDialog = new CommonOpenFileDialog() {
+			_folderBrowserDialog = new CommonOpenFileDialog() {
 				IsFolderPicker = true
 			};
 
@@ -63,15 +60,15 @@ namespace YobaLoncher {
 			gamePathLabel.Location = new Point(18, 22);
 			gamePathLabel.Size = new Size(444, 40);
 
-			gamePath = new TextBox();
-			gamePath.Text = Program.GamePath;
-			gamePath.Font = new Font("Lucida Sans Unicode", 12F, FontStyle.Regular, GraphicsUnit.Pixel, 204);
-			gamePath.Location = new Point(2, 4);
-			gamePath.Size = new Size(359, 20);
-			gamePath.BackColor = Color.FromArgb(32, 33, 34);
-			gamePath.BorderStyle = BorderStyle.None;
-			gamePath.ForeColor = Color.White;
-			YU.AssertLucida(gamePath);
+			_gamePath = new TextBox();
+			_gamePath.Text = Program.GamePath;
+			_gamePath.Font = new Font("Lucida Sans Unicode", 12F, FontStyle.Regular, GraphicsUnit.Pixel, 204);
+			_gamePath.Location = new Point(2, 4);
+			_gamePath.Size = new Size(359, 20);
+			_gamePath.BackColor = Color.FromArgb(32, 33, 34);
+			_gamePath.BorderStyle = BorderStyle.None;
+			_gamePath.ForeColor = Color.White;
+			YU.AssertLucida(_gamePath);
 
 			YobaButton browseButton = new YobaButton();
 			browseButton.Location = new Point(385, 44);
@@ -79,42 +76,42 @@ namespace YobaLoncher {
 			browseButton.Size = new Size(75, 27);
 			browseButton.Text = Locale.Get("Browse");
 			browseButton.UseVisualStyleBackColor = false;
-			browseButton.Click += new System.EventHandler(browseButton_Click);
+			browseButton.Click += new System.EventHandler(_browseButton_Click);
 
 			Panel fieldBackground = new Panel();
 			fieldBackground.BackColor = Color.FromArgb(32, 33, 34);
 			fieldBackground.BorderStyle = BorderStyle.FixedSingle;
-			fieldBackground.Controls.Add(gamePath);
+			fieldBackground.Controls.Add(_gamePath);
 			fieldBackground.Location = new Point(20, 44);
 			fieldBackground.Name = "fieldBackground";
 			fieldBackground.Size = new Size(361, 27);
 
-			launchViaGalaxy = new CheckBox();
-			launchViaGalaxy.Text = Locale.Get("SettingsGogGalaxy");
-			launchViaGalaxy.Font = new Font("Tahoma", 12F, FontStyle.Regular, GraphicsUnit.Pixel, 204);
-			launchViaGalaxy.Location = new Point(20, 86);
-			launchViaGalaxy.Size = new Size(440, 24);
-			launchViaGalaxy.Checked = LauncherConfig.LaunchFromGalaxy;
-			launchViaGalaxy.BackColor = Color.Transparent;
-			launchViaGalaxy.Enabled = LauncherConfig.GalaxyDir != null;
+			_launchViaGalaxy = new CheckBox();
+			_launchViaGalaxy.Text = Locale.Get("SettingsGogGalaxy");
+			_launchViaGalaxy.Font = new Font("Tahoma", 12F, FontStyle.Regular, GraphicsUnit.Pixel, 204);
+			_launchViaGalaxy.Location = new Point(20, 86);
+			_launchViaGalaxy.Size = new Size(440, 24);
+			_launchViaGalaxy.Checked = LauncherConfig.LaunchFromGalaxy;
+			_launchViaGalaxy.BackColor = Color.Transparent;
+			_launchViaGalaxy.Enabled = LauncherConfig.GalaxyDir != null;
 			
-			offlineMode = new CheckBox();
-			offlineMode.Text = Locale.Get("SettingsOfflineMode");
-			offlineMode.Font = new Font("Tahoma", 12F, FontStyle.Regular, GraphicsUnit.Pixel, 204);
-			offlineMode.Location = new Point(20, 119);
-			offlineMode.Size = new Size(440, 24);
-			offlineMode.Checked = LauncherConfig.StartOffline;
-			offlineMode.BackColor = Color.Transparent;
+			_offlineMode = new CheckBox();
+			_offlineMode.Text = Locale.Get("SettingsOfflineMode");
+			_offlineMode.Font = new Font("Tahoma", 12F, FontStyle.Regular, GraphicsUnit.Pixel, 204);
+			_offlineMode.Location = new Point(20, 119);
+			_offlineMode.Size = new Size(440, 24);
+			_offlineMode.Checked = LauncherConfig.StartOffline;
+			_offlineMode.BackColor = Color.Transparent;
 
-			theToolTip.SetToolTip(offlineMode, Locale.Get("SettingsOfflineModeTooltip"));
+			theToolTip.SetToolTip(_offlineMode, Locale.Get("SettingsOfflineModeTooltip"));
 
-			closeLauncherOnLaunch = new CheckBox();
-			closeLauncherOnLaunch.Text = Locale.Get("SettingsCloseOnLaunch");
-			closeLauncherOnLaunch.Font = new Font("Tahoma", 12F, FontStyle.Regular, GraphicsUnit.Pixel, 204);
-			closeLauncherOnLaunch.Location = new Point(20, 152);
-			closeLauncherOnLaunch.Size = new Size(440, 24);
-			closeLauncherOnLaunch.Checked = LauncherConfig.CloseOnLaunch;
-			closeLauncherOnLaunch.BackColor = Color.Transparent;
+			_closeLauncherOnLaunch = new CheckBox();
+			_closeLauncherOnLaunch.Text = Locale.Get("SettingsCloseOnLaunch");
+			_closeLauncherOnLaunch.Font = new Font("Tahoma", 12F, FontStyle.Regular, GraphicsUnit.Pixel, 204);
+			_closeLauncherOnLaunch.Location = new Point(20, 152);
+			_closeLauncherOnLaunch.Size = new Size(440, 24);
+			_closeLauncherOnLaunch.Checked = LauncherConfig.CloseOnLaunch;
+			_closeLauncherOnLaunch.BackColor = Color.Transparent;
 
 			Label openingPanelLabel = new Label();
 			openingPanelLabel.Text = Locale.Get("SettingsOpeningPanel");
@@ -122,11 +119,11 @@ namespace YobaLoncher {
 			openingPanelLabel.Location = new Point(18, 187);
 			openingPanelLabel.Size = new Size(444, 40);
 
-			openingPanelCB = new YobaComboBox();
-			openingPanelCB.Location = new Point(20, 208);
-			openingPanelCB.Name = "openingPanel";
-			openingPanelCB.Size = new Size(440, 22);
-			openingPanelCB.DataSource = new string[] {
+			_openingPanelCB = new YobaComboBox();
+			_openingPanelCB.Location = new Point(20, 208);
+			_openingPanelCB.Name = "openingPanel";
+			_openingPanelCB.Size = new Size(440, 22);
+			_openingPanelCB.DataSource = new string[] {
 				Locale.Get("SettingsOpeningPanelChangelog")
 				, Locale.Get("SettingsOpeningPanelStatus")
 				, Locale.Get("SettingsOpeningPanelLinks")
@@ -149,46 +146,46 @@ namespace YobaLoncher {
 			cbDD.Size = new Size(361, openingPanelCB.Height * 3);
 			*/
 			YobaButton makeBackupBtn = new YobaButton();
-			makeBackupBtn.MouseClick += MakeBackupBtn_MouseClick;
+			makeBackupBtn.MouseClick += _makeBackupBtn_MouseClick;
 			makeBackupBtn.Location = new Point(20, 246);
 			makeBackupBtn.Size = new Size(240, 24);
 			makeBackupBtn.Text = Locale.Get("SettingsMakeBackup");
 
 			YobaButton createShortcutBtn = new YobaButton();
-			createShortcutBtn.MouseClick += CreateShortcutBtn_MouseClick;
+			createShortcutBtn.MouseClick += _createShortcutBtn_MouseClick;
 			createShortcutBtn.Location = new Point(20, 278);
 			createShortcutBtn.Size = new Size(240, 24);
 			createShortcutBtn.Text = Locale.Get("SettingsCreateShortcut");
 
 			YobaButton openFolderBtn = new YobaButton();
-			openFolderBtn.MouseClick += openFolderBtn_MouseClick;
+			openFolderBtn.MouseClick += _openFolderBtn_MouseClick;
 			openFolderBtn.Location = new Point(20, 310);
 			openFolderBtn.Size = new Size(240, 24);
 			openFolderBtn.Text = Locale.Get("SettingsOpenDataFolder");
 
 			YobaButton uninstallLoncherBtn = new YobaButton();
-			uninstallLoncherBtn.MouseClick += UninstallLoncherBtn_MouseClick;
+			uninstallLoncherBtn.MouseClick += _uninstallLoncherBtn_MouseClick;
 			uninstallLoncherBtn.Location = new Point(20, 358);
 			uninstallLoncherBtn.Size = new Size(240, 24);
 			uninstallLoncherBtn.Text = Locale.Get("SettingsUninstallLoncher");
 
-			gamePath.TabIndex = 1;
+			_gamePath.TabIndex = 1;
 			browseButton.TabIndex = 2;
-			launchViaGalaxy.TabIndex = 3;
-			offlineMode.TabIndex = 4;
-			closeLauncherOnLaunch.TabIndex = 5;
+			_launchViaGalaxy.TabIndex = 3;
+			_offlineMode.TabIndex = 4;
+			_closeLauncherOnLaunch.TabIndex = 5;
 			
-			openingPanelCB.TabIndex = 10;
+			_openingPanelCB.TabIndex = 10;
 			makeBackupBtn.TabIndex = 15;
 			createShortcutBtn.TabIndex = 16;
 			uninstallLoncherBtn.TabIndex = 30;
 
 			Controls.Add(fieldBackground);
 			Controls.Add(browseButton);
-			Controls.Add(launchViaGalaxy);
-			Controls.Add(offlineMode);
-			Controls.Add(closeLauncherOnLaunch);
-			Controls.Add(openingPanelCB);
+			Controls.Add(_launchViaGalaxy);
+			Controls.Add(_offlineMode);
+			Controls.Add(_closeLauncherOnLaunch);
+			Controls.Add(_openingPanelCB);
 			Controls.Add(makeBackupBtn);
 			Controls.Add(createShortcutBtn);
 			Controls.Add(openFolderBtn);
@@ -209,12 +206,12 @@ namespace YobaLoncher {
 			Controls.Add(gamePathLabel);
 
 			Load += new EventHandler((object o, EventArgs a) => {
-				openingPanelCB.SelectedIndex = (int)LauncherConfig.StartPage;
+				_openingPanelCB.SelectedIndex = (int)LauncherConfig.StartPage;
 			});
 			ResumeLayout();
 		}
 
-		private void CreateShortcutBtn_MouseClick(object sender, MouseEventArgs e) {
+		private void _createShortcutBtn_MouseClick(object sender, MouseEventArgs e) {
 			try {
 				string filename = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Запускатр Боевых Братьев.lnk";
 				if (!IOFile.Exists(filename)) {
@@ -222,9 +219,9 @@ namespace YobaLoncher {
 					IWshShortcut shortcut = wsh.CreateShortcut(filename) as IWshShortcut;
 					shortcut.Arguments = "";
 					shortcut.TargetPath = Application.ExecutablePath;
-					shortcut.WorkingDirectory = Program.LoncherPath;
+					shortcut.WorkingDirectory = Program.LONCHER_PATH;
 					shortcut.WindowStyle = 1;
-					string iconFile = Program.LoncherDataPath + "shortcutIcon.ico";
+					string iconFile = Program.LONCHER_DATA_PATH + "shortcutIcon.ico";
 					bool validIconFile = IOFile.Exists(iconFile);
 					if (!validIconFile) {
 						string exename = Program.GamePath + Program.LoncherSettings.ExeName;
@@ -252,7 +249,7 @@ namespace YobaLoncher {
 			}
 		}
 
-		private void MakeBackupBtn_MouseClick(object sender, MouseEventArgs e) {
+		private void _makeBackupBtn_MouseClick(object sender, MouseEventArgs e) {
 			string bkpdir = Program.GamePath + "_loncher_backups\\" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + "\\";
 			if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("SettingsMakeBackupInfo"), bkpdir), YesNoBtns)) {
 				try {
@@ -297,36 +294,36 @@ namespace YobaLoncher {
 			}
 		}
 
-		private void browseButton_Click(object sender, EventArgs e) {
-			folderBrowserDialog.InitialDirectory = gamePath.Text;
-			if (folderBrowserDialog.ShowDialog() == CommonFileDialogResult.Ok) {
-				gamePath.Text = folderBrowserDialog.FileName;
+		private void _browseButton_Click(object sender, EventArgs e) {
+			_folderBrowserDialog.InitialDirectory = _gamePath.Text;
+			if (_folderBrowserDialog.ShowDialog() == CommonFileDialogResult.Ok) {
+				_gamePath.Text = _folderBrowserDialog.FileName;
 			}
 		}
 
-		private void openFolderBtn_MouseClick(object sender, EventArgs e) {
+		private void _openFolderBtn_MouseClick(object sender, EventArgs e) {
 			YU.RunCommand("/C explorer \"" + Program.GamePath + "data\"");
 		}
 
-		private void openingPanelCB_DrawItem(object sender, DrawItemEventArgs e) {
+		private void _openingPanelCB_DrawItem(object sender, DrawItemEventArgs e) {
 			int index = e.Index >= 0 ? e.Index : 0;
-			using (SolidBrush brush = new SolidBrush(openingPanelCB.BackColor)) {
+			using (SolidBrush brush = new SolidBrush(_openingPanelCB.BackColor)) {
 				e.DrawBackground();
-				e.Graphics.DrawString(openingPanelCB.Items[index].ToString(), e.Font, brush, e.Bounds, StringFormat.GenericDefault);
+				e.Graphics.DrawString(_openingPanelCB.Items[index].ToString(), e.Font, brush, e.Bounds, StringFormat.GenericDefault);
 				e.DrawFocusRectangle();
 			}
 		}
 
-		private void UninstallRussifierBtn_MouseClick(object sender, EventArgs e) {
+		private void _uninstallRussifierBtn_MouseClick(object sender, EventArgs e) {
 			try {
 				string msg = Locale.Get("ProductUninstallationConfirmation") + ":";
-				foreach (FileInfo fi in urules_.FilesToDelete) {
+				foreach (FileInfo fi in _urules.FilesToDelete) {
 					if (IOFile.Exists(Program.GamePath + fi.Path)) {
 						msg += "\r\n" + Program.GamePath + fi.Path;
 					}
 				}
 				if (YobaDialog.ShowDialog(msg, YobaDialog.YesNoBtns) == DialogResult.Yes) {
-					foreach (FileInfo fi in urules_.FilesToDelete) {
+					foreach (FileInfo fi in _urules.FilesToDelete) {
 						if (IOFile.Exists(Program.GamePath + fi.Path)) {
 							IOFile.Delete(Program.GamePath + fi.Path);
 						}
@@ -338,12 +335,12 @@ namespace YobaLoncher {
 			}
 		}
 
-		private void UninstallLoncherBtn_MouseClick(object sender, EventArgs e) {
+		private void _uninstallLoncherBtn_MouseClick(object sender, EventArgs e) {
 			try {
 				string msg = Locale.Get("LoncherUninstallationConfirmation");
 				if (YobaDialog.ShowDialog(msg, YobaDialog.YesNoBtns) == DialogResult.Yes) {
-					if (Directory.Exists(Program.LoncherDataPath)) {
-						Directory.Delete(Program.LoncherDataPath, true);
+					if (Directory.Exists(Program.LONCHER_DATA_PATH)) {
+						Directory.Delete(Program.LONCHER_DATA_PATH, true);
 					}
 					YU.RunCommand(String.Format("/C choice /C Y /N /D Y /T 1 & Del \"{0}\"", Application.ExecutablePath));
 					Application.Exit();

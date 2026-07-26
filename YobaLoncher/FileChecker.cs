@@ -22,11 +22,11 @@ namespace YobaLoncher {
 		}
 	}
 	class FileChecker {
-		private static MD5 md5_;
-		private static Regex forbiddenChars = new Regex("(\\\\)|(//)|([\\*\\?:<>\"])");
+		private static MD5 _md5;
+		private static readonly Regex _FORBIDDEN_CHARS = new Regex("(\\\\)|(//)|([\\*\\?:<>\"])");
 
 		public static MD5 MD5 {
-			get => md5_ == null ? (md5_ = MD5.Create()) : md5_;
+			get => _md5 ?? (_md5 = MD5.Create());
 		}
 
 		public static async Task<CheckResult> CheckFiles(List<FileInfo> files) {
@@ -58,7 +58,7 @@ namespace YobaLoncher {
 								file.IsHashOk = true;
 							}
 							else {
-								await CheckExistingFileOnline(root, file, result);
+								await _checkExistingFileOnline(root, file, result);
 							}
 						}
 					}
@@ -67,21 +67,20 @@ namespace YobaLoncher {
 						fileDateHashes.Remove(file.Path);
 						result.InvalidFiles.AddLast(file);
 						result.IsAllOk = false;
-						await UpdatefileSize(file);
+						await _updatefileSize(file);
 					}
 				}
 				else {
-					await CheckExistingFileOnline(root, file, result);
+					await _checkExistingFileOnline(root, file, result);
 				}
 				checkEventHandler?.Invoke(null, new FileCheckedEventArgs(file));
 			}
 			return result;
 		}
 
-		private static async Task CheckExistingFileOnline(string root, FileInfo file, CheckResult result) {
+		private static async Task _checkExistingFileOnline(string root, FileInfo file, CheckResult result) {
 			if (YU.StringHasText(file.Url)) {
-				string md5;
-				file.IsHashOk = CheckFileMD5(root, file, out md5);
+				file.IsHashOk = CheckFileMD5(root, file, out string md5);
 				if (file.IsHashOk) {
 					string filedate = YU.GetFileDateString(root, file.Path);
 					LauncherConfig.FileDates[file.Path] = filedate;
@@ -91,13 +90,13 @@ namespace YobaLoncher {
 					result.InvalidFiles.AddLast(file);
 					result.IsAllOk = false;
 					if (!Program.OfflineMode) {
-						await UpdatefileSize(file);
+						await _updatefileSize(file);
 					}
 				}
 			}
 		}
 
-		private static async Task UpdatefileSize(FileInfo file) {
+		private static async Task _updatefileSize(FileInfo file) {
 			if (file.Size < 1 && file.IsUrlAvailable) {
 				WebRequest webRequest = WebRequest.Create(file.Url);
 				webRequest.Method = "HEAD";
@@ -148,7 +147,7 @@ namespace YobaLoncher {
 			if (file.Path == null || file.Path.Length == 0) {
 				throw new Exception(Locale.Get("FileCheckNoFilePath"));
 			}
-			if (forbiddenChars.IsMatch(file.Path)) {
+			if (_FORBIDDEN_CHARS.IsMatch(file.Path)) {
 				throw new Exception(string.Format(Locale.Get("FileCheckNoFilePath"), file.Path));
 			}
 			string filepath = root + file.Path;

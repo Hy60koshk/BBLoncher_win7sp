@@ -15,7 +15,7 @@ namespace YobaLoncher {
 		public class YobaWebController {
 			private static YobaWebController _instance = null;
 
-			internal MainForm Form = null;
+			private MainForm _form = null;
 
 			public static YobaWebController Instance {
 				get {
@@ -45,14 +45,14 @@ namespace YobaLoncher {
 			}
 			public void Info(string text, string onOk) {
 				YobaDialog.ShowDialog(text);
-				Form.mainBrowser.Document.InvokeScript(onOk);
+				_form.mainBrowser.Document.InvokeScript(onOk);
 			}
 			public void Ask(string text, string onYes, string onNo) {
 				if (YobaDialog.ShowDialog(text, YobaDialog.YesNoBtns) == DialogResult.Yes) {
-					Form.mainBrowser.Document.InvokeScript(onYes);
+					_form.mainBrowser.Document.InvokeScript(onYes);
 				}
 				else {
-					Form.mainBrowser.Document.InvokeScript(onNo);
+					_form.mainBrowser.Document.InvokeScript(onNo);
 				}
 			}
 			public void Warn(string text) {
@@ -60,41 +60,41 @@ namespace YobaLoncher {
 			}
 			public void Warn(string text, string onOk) {
 				MessageBox.Show(text);
-				Form.mainBrowser.Document.InvokeScript(onOk);
+				_form.mainBrowser.Document.InvokeScript(onOk);
 			}
 			public void Warn(string text, string onYes, string onNo) {
-				if (MessageBox.Show(Form, text, "", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes) {
-					Form.mainBrowser.Document.InvokeScript(onYes);
+				if (MessageBox.Show(_form, text, "", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes) {
+					_form.mainBrowser.Document.InvokeScript(onYes);
 				}
 				else {
-					Form.mainBrowser.Document.InvokeScript(onNo);
+					_form.mainBrowser.Document.InvokeScript(onNo);
 				}
 			}
 			public void Error(string text) {
-				MessageBox.Show(Form, text, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(_form, text, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 			public void Error(string text, string onOk) {
-				MessageBox.Show(Form, text, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				Form.mainBrowser.Document.InvokeScript(onOk);
+				MessageBox.Show(_form, text, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				_form.mainBrowser.Document.InvokeScript(onOk);
 			}
 
 			public void Close() {
-				Form.ExitApp();
+				_form.ExitApp();
 			}
 			public void Minimize() {
-				Form.WindowState = FormWindowState.Minimized;
+				_form.WindowState = FormWindowState.Minimized;
 			}
 			public void Maximize() {
-				Form.ToggleMaximized();
+				_form.ToggleMaximized();
 			}
 			public void Help() {
 				YU.ShowHelpDialog();
 			}
 			public void Settings() {
-				Form.ShowSettingsDialog();
+				_form.ShowSettingsDialog();
 			}
 			public bool IsMaximized() {
-				return Form.WindowState == FormWindowState.Maximized;
+				return _form.WindowState == FormWindowState.Maximized;
 			}
 
 			public string RetrieveBackground() {
@@ -105,30 +105,30 @@ namespace YobaLoncher {
 			}
 			public void UpdateAppControlsSize(string width, string height) {
 				if (Int32.TryParse(width, out int ww)) {
-					Form.draggingPanel.WidthSpace = ww;
+					_form.draggingPanel.WidthSpace = ww;
 				}
 				if (Int32.TryParse(height, out int hh)) {
-					Form.draggingPanel.UpdateSize(Form.Width, hh);
+					_form.draggingPanel.UpdateSize(_form.Width, hh);
 				}
 				else {
-					Form.draggingPanel.UpdateWidth(Form.Width);
+					_form.draggingPanel.UpdateWidth(_form.Width);
 				}
 			}
 			public int GetProgressBarMax() {
-				return Form.progressBarInfo_.MaxValue;
+				return _form.progressBarInfo_.MaxValue;
 			}
 			public string GetProgressBarState() {
-				return JsonConvert.SerializeObject(Form.progressBarInfo_);
+				return JsonConvert.SerializeObject(_form.progressBarInfo_);
 			}
 
 			public void UpdateStatusWebView() {
-				Form.UpdateStatusWebView();
+				_form.UpdateStatusWebView();
 			}
 			public void UpdateModsWebView() {
-				Form.UpdateModsWebView();
+				_form.UpdateModsWebView();
 			}
 			public void CheckModUpdates() {
-				Form.CheckModUpdates();
+				_form.CheckModUpdates();
 			}
 
 			public void UncheckFile(int groupidx, int fileidx) {
@@ -136,7 +136,7 @@ namespace YobaLoncher {
 					FileInfo fi = Program.LoncherSettings.GameVersion.FileGroups[groupidx].Files[fileidx];
 					if (fi != null && !fi.IsMandatory) {
 						fi.IsCheckedToDl = false;
-						Form.CheckReady();
+						_form.CheckReady();
 					}
 				}
 				catch (Exception ex) {
@@ -148,7 +148,7 @@ namespace YobaLoncher {
 					FileInfo fi = Program.LoncherSettings.GameVersion.FileGroups[groupidx].Files[fileidx];
 					if (fi != null) {
 						fi.IsCheckedToDl = true;
-						Form.SetReady(false);
+						_form.SetReady(false);
 					}
 				}
 				catch (Exception ex) {
@@ -157,26 +157,26 @@ namespace YobaLoncher {
 			}
 
 			public bool LaunchGame() {
-				Form.OnLaunchGameBtn();
+				_form.OnLaunchGameBtn();
 				return true;
 			}
 
-			private List<WebModInfo> modList_;
+			private List<WebModInfo> _modList;
 
 			internal List<WebModInfo> ModList {
-				get => modList_;
+				get => _modList;
 			}
 
 			internal void UpdateModList() {
-				modList_ = Program.LoncherSettings.AvailableMods.Select(mod => new WebModInfo(mod)).ToList();
+				_modList = Program.LoncherSettings.AvailableMods.Select(mod => new WebModInfo(mod)).ToList();
 			}
 
-			private ModInfo getModInfoById(string id) {
-				if (modList_ is null) {
+			private ModInfo _getModInfoById(string id) {
+				if (_modList is null) {
 					YobaDialog.ShowDialog("Mod List has not been initialized yet");
 				}
 				else {
-					List<WebModInfo> mods = modList_.FindAll(m => m.Id == id);
+					List<WebModInfo> mods = _modList.FindAll(m => m.Id == id);
 					switch (mods.Count) {
 						case 1:
 							return mods[0].ModInfo;
@@ -191,7 +191,7 @@ namespace YobaLoncher {
 				return null;
 			}
 
-			private bool checkConflicts(ModInfo mi, string locKey) {
+			private bool _checkConflicts(ModInfo mi, string locKey) {
 				List<string> conflictedMods = new List<string>();
 				foreach (ModInfo ami in Program.LoncherSettings.AvailableMods) {
 					if (ami.IsActive && ami.DoesConflict(mi)) {
@@ -207,7 +207,7 @@ namespace YobaLoncher {
 				}
 				return true;
 			}
-			private bool checkDependencies(ModInfo mi, string locKey) {
+			private bool _checkDependencies(ModInfo mi, string locKey) {
 				List<string> dependentMods = new List<string>();
 				foreach (ModInfo dmi in Program.LoncherSettings.AvailableMods) {
 					if (dmi.IsActive && dmi.DoesDepend(mi)) {
@@ -225,7 +225,7 @@ namespace YobaLoncher {
 			}
 
 			public void ModInstall(string id, string verId) {
-				ModInfo mi = getModInfoById(id);
+				ModInfo mi = _getModInfoById(id);
 				if (mi is null) {
 					YobaDialog.ShowDialog("There's no mod with ID " + id);
 					return;
@@ -249,30 +249,30 @@ namespace YobaLoncher {
 				
 				//mi.InitCurrentInstallForVersion(versions[verIdx].Item1);
 				mi.InitInstallForVersion(verId);
-				if (mi.CurrentVersion != null && checkConflicts(mi, "SomeModsConflictWithThisInstall")) {
+				if (mi.CurrentVersion != null && _checkConflicts(mi, "SomeModsConflictWithThisInstall")) {
 					InstallModAsync(mi);
 				}
 			}
 			
 			public void ModUninstall(string id) {
-				ModInfo mi = getModInfoById(id);
-				if (mi != null && checkDependencies(mi, "SomeModsDependOnThisDelete")) {
+				ModInfo mi = _getModInfoById(id);
+				if (mi != null && _checkDependencies(mi, "SomeModsDependOnThisDelete")) {
 					if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("AreYouSureUninstallMod"), mi.Name), YobaDialog.YesNoBtns)) {
 						mi.Delete();
-						Form.UpdateModsWebView();
+						_form.UpdateModsWebView();
 					}
 				}
 			}
 			public void ModDisable(string id) {
-				ModInfo mi = getModInfoById(id);
-				if (mi != null && checkDependencies(mi, "SomeModsDependOnThisDisable")) {
+				ModInfo mi = _getModInfoById(id);
+				if (mi != null && _checkDependencies(mi, "SomeModsDependOnThisDisable")) {
 					mi.Disable();
-					Form.UpdateModsWebView();
+					_form.UpdateModsWebView();
 				}
 			}
 			public void ModEnable(string id) {
-				ModInfo mi = getModInfoById(id);
-				if (mi != null && checkConflicts(mi, "SomeModsConflictWithThisEnable")) {
+				ModInfo mi = _getModInfoById(id);
+				if (mi != null && _checkConflicts(mi, "SomeModsConflictWithThisEnable")) {
 					ModEnableAsync(mi);
 				}
 			}
@@ -280,7 +280,7 @@ namespace YobaLoncher {
 			internal async void ModEnableAsync(ModInfo mi) {
 				CheckResult modFileCheckResult = await mi.Enable();
 				if (modFileCheckResult is null || modFileCheckResult.IsAllOk) {
-					Form.UpdateModsWebView();
+					_form.UpdateModsWebView();
 				}
 				else {
 					LinkedList<FileInfo> files = modFileCheckResult.InvalidFiles;
@@ -289,27 +289,27 @@ namespace YobaLoncher {
 						size += fi.Size;
 					}
 					if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("ModActivationFilesAreOutdated"), mi.VersionedName, YU.FormatFileSize(size)), YobaDialog.YesNoBtns)) {
-						if (Form.modsToUpdate_ is null) {
-							Form.modsToUpdate_ = new LinkedList<ModInfo>();
-							Form.modsToUpdate_.AddLast(mi);
+						if (_form.modsToUpdate_ is null) {
+							_form.modsToUpdate_ = new LinkedList<ModInfo>();
+							_form.modsToUpdate_.AddLast(mi);
 							mi.MarkedForUpdate = true;
 							mi.DlInProgress = true;
-							Form.UpdateModsWebView();
-							if (!Form.UpdateInProgress_) {
-								Form.DownloadNextMod();
+							_form.UpdateModsWebView();
+							if (!_form.UpdateInProgress_) {
+								_form._downloadNextMod();
 							}
 						}
 						else {
 							mi.DlInProgress = true;
-							Form.modsToUpdate_.AddLast(mi);
-							Form.UpdateModsWebView();
+							_form.modsToUpdate_.AddLast(mi);
+							_form.UpdateModsWebView();
 						}
 					}
 					else {
 						if (DialogResult.Yes == YobaDialog.ShowDialog(Locale.Get("ModDisableToPreventCorruption"), YobaDialog.YesNoBtns)) {
 							mi.Disable();
 						}
-						Form.UpdateModsWebView();
+						_form.UpdateModsWebView();
 					}
 				}
 			}
@@ -326,19 +326,19 @@ namespace YobaLoncher {
 				}
 				string modSize = YU.FormatFileSize(size);
 				if (DialogResult.Yes == YobaDialog.ShowDialog(String.Format(Locale.Get("AreYouSureInstallMod"), mi.VersionedName, modSize), YobaDialog.YesNoBtns)) {
-					if (Form.modsToUpdate_ is null) {
-						Form.modsToUpdate_ = new LinkedList<ModInfo>();
-						Form.modsToUpdate_.AddLast(mi);
+					if (_form.modsToUpdate_ is null) {
+						_form.modsToUpdate_ = new LinkedList<ModInfo>();
+						_form.modsToUpdate_.AddLast(mi);
 						mi.DlInProgress = true;
-						Form.UpdateModsWebView();
-						if (!Form.UpdateInProgress_) {
-							Form.DownloadNextMod();
+						_form.UpdateModsWebView();
+						if (!_form.UpdateInProgress_) {
+							_form._downloadNextMod();
 						}
 					}
 					else {
 						mi.DlInProgress = true;
-						Form.modsToUpdate_.AddLast(mi);
-						Form.UpdateModsWebView();
+						_form.modsToUpdate_.AddLast(mi);
+						_form.UpdateModsWebView();
 					}
 				}
 			}
@@ -347,25 +347,26 @@ namespace YobaLoncher {
 			 * OPTIONS
 			 */
 			public string OptionsGetCurrentSettings() {
-				Dictionary<string, string> settings = new Dictionary<string, string>();
-				settings.Add("CurrentlyOffline", Program.OfflineMode ? "1" : "0");
-				settings.Add("StartOffline", LauncherConfig.StartOffline ? "1" : "0");
-				settings.Add("CloseOnLaunch", LauncherConfig.CloseOnLaunch ? "1" : "0");
-				settings.Add("ShowHiddenMods", LauncherConfig.ShowHiddenMods ? "1" : "0");
-				settings.Add("LaunchFromGalaxy", LauncherConfig.LaunchFromGalaxy ? "1" : "0");
-				settings.Add("ModsCompactMode", LauncherConfig.ModsCompactMode ? "1" : "0");
-				settings.Add("ZoomPercent", LauncherConfig.ZoomPercent.ToString());
-				settings.Add("LoggingLevel", LauncherConfig.LoggingLevel.ToString());
-				settings.Add("GameDir", LauncherConfig.GameDir);
-				settings.Add("StartPage", ((int)LauncherConfig.StartPage).ToString());
+				Dictionary<string, string> settings = new Dictionary<string, string> {
+					{ "CurrentlyOffline", Program.OfflineMode ? "1" : "0" },
+					{ "StartOffline", LauncherConfig.StartOffline ? "1" : "0" },
+					{ "CloseOnLaunch", LauncherConfig.CloseOnLaunch ? "1" : "0" },
+					{ "ShowHiddenMods", LauncherConfig.ShowHiddenMods ? "1" : "0" },
+					{ "LaunchFromGalaxy", LauncherConfig.LaunchFromGalaxy ? "1" : "0" },
+					{ "ModsCompactMode", LauncherConfig.ModsCompactMode ? "1" : "0" },
+					{ "ZoomPercent", LauncherConfig.ZoomPercent.ToString() },
+					{ "LoggingLevel", LauncherConfig.LoggingLevel.ToString() },
+					{ "GameDir", LauncherConfig.GameDir },
+					{ "StartPage", ((int)LauncherConfig.StartPage).ToString() }
+				};
 				return JsonConvert.SerializeObject(settings);
 			}
 			public bool OptionsCheckOffline(bool offlineOn) {
 				LauncherConfig.StartOffline = offlineOn;
 				if (Program.OfflineMode != offlineOn) {
 					if (YobaDialog.ShowDialog(Locale.Get(offlineOn ? "OfflineModeSet" : "OnlineModeSet"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
-						Form.Hide();
-						new PreloaderForm(Form).Show();
+						_form.Hide();
+						new PreloaderForm(_form).Show();
 					}
 				}
 				return LauncherConfig.StartOffline;
@@ -397,7 +398,7 @@ namespace YobaLoncher {
 				LauncherConfig.LoggingLevel = level;
 			}
 			public int OptionsSetZoom(int zoom) {
-				return Form.SetBrowserZoom(zoom);
+				return _form.SetBrowserZoom(zoom);
 			}
 
 			public string OptionsBrowseGamePath() {
@@ -415,8 +416,8 @@ namespace YobaLoncher {
 							LauncherConfig.GameDir = path;
 							if (YobaDialog.ShowDialog(Locale.Get("GamePathChanged"), YobaDialog.YesNoBtns) == DialogResult.Yes) {
 								LauncherConfig.Save();
-								Form.Hide();
-								new PreloaderForm(Form).Show();
+								_form.Hide();
+								new PreloaderForm(_form).Show();
 							}
 							return path;
 						}
@@ -458,8 +459,8 @@ namespace YobaLoncher {
 				try {
 					string msg = Locale.Get("LoncherUninstallationConfirmation");
 					if (YobaDialog.ShowDialog(msg, YobaDialog.YesNoBtns) == DialogResult.Yes) {
-						if (Directory.Exists(Program.LoncherDataPath)) {
-							Directory.Delete(Program.LoncherDataPath, true);
+						if (Directory.Exists(Program.LONCHER_DATA_PATH)) {
+							Directory.Delete(Program.LONCHER_DATA_PATH, true);
 						}
 						YU.RunCommand(String.Format("/C choice /C Y /N /D Y /T 1 & Del \"{0}\"", Application.ExecutablePath));
 						Application.Exit();
@@ -483,9 +484,9 @@ namespace YobaLoncher {
 						IWshRuntimeLibrary.IWshShortcut shortcut = wsh.CreateShortcut(filename) as IWshRuntimeLibrary.IWshShortcut;
 						shortcut.Arguments = "";
 						shortcut.TargetPath = Application.ExecutablePath;
-						shortcut.WorkingDirectory = Program.LoncherPath;
+						shortcut.WorkingDirectory = Program.LONCHER_PATH;
 						shortcut.WindowStyle = 1;
-						string iconFile = Program.LoncherDataPath + "shortcutIcon.ico";
+						string iconFile = Program.LONCHER_DATA_PATH + "shortcutIcon.ico";
 						bool validIconFile = File.Exists(iconFile);
 						if (!validIconFile) {
 							string exename = Program.GamePath + Program.LoncherSettings.ExeName;

@@ -61,7 +61,7 @@
 			this.draggingPanel.Name = "draggingPanel";
 			this.draggingPanel.Size = new System.Drawing.Size(378, 24);
 			this.draggingPanel.TabIndex = 300;
-			this.draggingPanel.MouseDown += new System.Windows.Forms.MouseEventHandler(this.draggingPanel_MouseDown);
+			this.draggingPanel.MouseDown += new System.Windows.Forms.MouseEventHandler(this._draggingPanel_MouseDown);
 			// 
 			// YobaDialog
 			// 

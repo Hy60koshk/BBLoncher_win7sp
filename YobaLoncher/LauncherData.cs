@@ -80,13 +80,13 @@ namespace YobaLoncher {
 		public static int LoggingLevel = 0;
 #endif
 		public static StartPageEnum StartPage = StartPageEnum.Status;
-		private const string CFGFILE = @"loncherData\loncher.cfg";
-		private const string MODINFOFILE = @"loncherData\installedMods.json";
+		private const string _CFGFILE = @"loncherData\loncher.cfg";
+		private const string _MODINFOFILE = @"loncherData\installedMods.json";
 		public static List<ModCfgInfo> InstalledMods = new List<ModCfgInfo>();
 
 		public static void Save() {
 			try {
-				File.WriteAllLines(CFGFILE, new string[] {
+				File.WriteAllLines(_CFGFILE, new string[] {
 					"path = " + GameDir
 					, "startpage = " + (int)StartPage
 					, "startviagalaxy = " + (LaunchFromGalaxy ? 1 : 0)
@@ -113,18 +113,18 @@ namespace YobaLoncher {
 
 		public static void SaveMods() {
 			try {
-				File.WriteAllText(MODINFOFILE, JsonConvert.SerializeObject(InstalledMods));
+				File.WriteAllText(_MODINFOFILE, JsonConvert.SerializeObject(InstalledMods));
 			}
 			catch (Exception ex) {
 				YobaDialog.ShowDialog(Locale.Get("CannotWriteCfg") + ":\r\n" + ex.Message);
 			}
 		}
 
-		private static bool ParseBooleanParam(string val) {
+		private static bool _parseBooleanParam(string val) {
 			return val.Length > 0 && !"0".Equals(val) && val.Length != 5;
 		}
 
-		private static int ParseIntParam(string val, int def) {
+		private static int _parseIntParam(string val, int def) {
 			if (val.Length > 0 && int.TryParse(val, out int intval)) {
 				return intval;
 			}
@@ -134,8 +134,8 @@ namespace YobaLoncher {
 		public static void Load() {
 			GalaxyDir = YU.GetGogGalaxyPath();
 			try {
-				if (File.Exists(CFGFILE)) {
-					string[] lines = File.ReadAllLines(CFGFILE);
+				if (File.Exists(_CFGFILE)) {
+					string[] lines = File.ReadAllLines(_CFGFILE);
 					foreach (string line in lines) {
 						if (line.Length > 0) {
 							int eqidx = line.IndexOf('=');
@@ -147,39 +147,39 @@ namespace YobaLoncher {
 										GameDir = val;
 										break;
 									case "startpage":
-										int spidx = ParseIntParam(val, 100);
+										int spidx = _parseIntParam(val, 100);
 										if (spidx > -1 && spidx < 4) {
 											StartPage = (StartPageEnum)spidx;
 										}
 										break;
 									case "windowheight":
-										WindowHeight = ParseIntParam(val, WindowHeight);
+										WindowHeight = _parseIntParam(val, WindowHeight);
 										break;
 									case "windowwidth":
-										WindowWidth = ParseIntParam(val, WindowWidth);
+										WindowWidth = _parseIntParam(val, WindowWidth);
 										break;
 									case "lastsrvchk":
 										LastSurveyId = val;
 										break;
 									case "startviagalaxy":
 										if (GalaxyDir != null) {
-											LaunchFromGalaxy = ParseBooleanParam(val);
+											LaunchFromGalaxy = _parseBooleanParam(val);
 										}
 										break;
 									case "ismaximized":
-										IsMaximized = ParseBooleanParam(val);
+										IsMaximized = _parseBooleanParam(val);
 										break;
 									case "offlinemode":
-										StartOffline = ParseBooleanParam(val);
+										StartOffline = _parseBooleanParam(val);
 										break;
 									case "closeonlaunch":
-										CloseOnLaunch = ParseBooleanParam(val);
+										CloseOnLaunch = _parseBooleanParam(val);
 										break;
 									case "showhiddenmods":
-										ShowHiddenMods = ParseBooleanParam(val);
+										ShowHiddenMods = _parseBooleanParam(val);
 										break;
 									case "modscompactmode":
-										ModsCompactMode = ParseBooleanParam(val);
+										ModsCompactMode = _parseBooleanParam(val);
 										break;
 									case "filedates":
 										try {
@@ -212,13 +212,13 @@ namespace YobaLoncher {
 										}
 										break;
 									case "logginglevel":
-										LoggingLevel = ParseIntParam(val, LoggingLevel);
+										LoggingLevel = _parseIntParam(val, LoggingLevel);
 										if (LoggingLevel < 0) {
 											LoggingLevel = 0;
 										}
 										break;
 									case "zoompercent":
-										ZoomPercent = ParseIntParam(val, ZoomPercent);
+										ZoomPercent = _parseIntParam(val, ZoomPercent);
 										break;
 								}
 							}
@@ -233,8 +233,8 @@ namespace YobaLoncher {
 						}
 					}
 				}
-				if (File.Exists(MODINFOFILE)) {
-					InstalledMods = JsonConvert.DeserializeObject<List<ModCfgInfo>>(File.ReadAllText(MODINFOFILE));
+				if (File.Exists(_MODINFOFILE)) {
+					InstalledMods = JsonConvert.DeserializeObject<List<ModCfgInfo>>(File.ReadAllText(_MODINFOFILE));
 					List<string> names = new List<string>();
 					if (InstalledMods.Count > 0) {
 						if (InstalledMods[0].Id == null) {
@@ -300,9 +300,9 @@ namespace YobaLoncher {
 		public string BackgroundPath;
 		public Image PreloaderBackground;
 		public Icon Icon;
-		private WebClient wc_;
-		private LauncherDataRaw raw_;
-		public LauncherDataRaw RAW => raw_;
+		private readonly WebClient _wc;
+		private readonly LauncherDataRaw _raw;
+		public LauncherDataRaw RAW => _raw;
 		public List<string> ModFilesInUse = new List<string>();
 		public List<string> ModFilesToDelete = new List<string>();
 		public Dictionary<string, FileInfo> ExistingModFiles = new Dictionary<string, FileInfo>();
@@ -345,9 +345,9 @@ namespace YobaLoncher {
 		public LauncherData(string json) {
 
 			LauncherDataRaw raw = JsonConvert.DeserializeObject<LauncherDataRaw>(json);
-			raw_ = raw;
-			wc_ = new WebClient();
-			wc_.Encoding = System.Text.Encoding.UTF8;
+			_raw = raw;
+			_wc = new WebClient();
+			_wc.Encoding = System.Text.Encoding.UTF8;
 
 			StartPage = raw.StartPage;
 			UI = raw.UI ?? new Dictionary<string, UIElement>();
@@ -410,10 +410,10 @@ namespace YobaLoncher {
 		}
 
 		public void InitForVersion(string curVer) {
-			ModGroups = raw_.ModGroups;
-			ModMigrations = raw_.ModMigrations;
-			if (raw_.Mods2 != null && raw_.Mods2.Count > 0) {
-				foreach (RawModInfo rmi in raw_.Mods2) {
+			ModGroups = _raw.ModGroups;
+			ModMigrations = _raw.ModMigrations;
+			if (_raw.Mods2 != null && _raw.Mods2.Count > 0) {
+				foreach (RawModInfo rmi in _raw.Mods2) {
 					if (YU.StringHasText(rmi.Name) && rmi.Versions != null) {
 						if (rmi.Versions.Count > 0) {
 							ModInfo mi = new ModInfo(rmi, ModGroups);
@@ -494,10 +494,6 @@ namespace YobaLoncher {
 					}
 				}
 			}*/
-		}
-
-		private void GatherDeps() {
-
 		}
 	}
 
@@ -811,13 +807,13 @@ namespace YobaLoncher {
 		public string Description;
 		public string DetailedDescription;
 		public ModInfo ModInfo;
-		private List<ModDep[]> dependencies_;
-		private List<ModDep> conflicts_;
+		private readonly List<ModDep[]> _dependencies;
+		private readonly List<ModDep> _conflicts;
 		public List<string> ExeVersions = new List<string>();
 		public List<FileInfo> Files = new List<FileInfo>();
 		public bool NeedsDonation = false;
 
-		private static string[] _anyVersions = new string[] { "ALL", "ANY", "DEFAULT", "OTHER" };
+		private static readonly string[] _ANY_VERSIONS = new string[] { "ALL", "ANY", "DEFAULT", "OTHER" };
 
 		public ModVersion(RawModVersionInfo rmi, ModInfo modInfo) {
 			ModInfo = modInfo;
@@ -826,32 +822,32 @@ namespace YobaLoncher {
 			Description = rmi.Description;
 			DetailedDescription = rmi.DetailedDescription;
 			ExeVersions = rmi.ExeVersions.Split(',').Select(x => x.Trim().ToUpperInvariant()).Where(x => x.Length > 0).ToList();
-			dependencies_ = ModUtils.parseDependancies(rmi.Dependencies);
-			conflicts_ = ModUtils.parseConflicts(rmi.Conflicts);
+			_dependencies = ModUtils.ParseDependencies(rmi.Dependencies);
+			_conflicts = ModUtils.ParseConflicts(rmi.Conflicts);
 			NeedsDonation = rmi.NeedsDonation;
 			Files = rmi.Files;
 		}
 
 		public bool HasVersion() {
 			string gvName = Program.GameVersion;
-			return ExeVersions.Contains(gvName) || _anyVersions.Contains(ExeVersions[0]);
+			return ExeVersions.Contains(gvName) || _ANY_VERSIONS.Contains(ExeVersions[0]);
 		}
 
 		public List<ModDep> GetConflicts() {
-			if (conflicts_ != null) {
-				if (conflicts_[0].ModId.Equals("-")) {
+			if (_conflicts != null) {
+				if (_conflicts[0].ModId.Equals("-")) {
 					return null;
 				}
-				return conflicts_;
+				return _conflicts;
 			}
 			return ModInfo.Conflicts;
 		}
 		public List<ModDep[]> GetDependencies() {
-			if (dependencies_ != null) {
-				if (dependencies_[0][0].ModId.Equals("-")) {
+			if (_dependencies != null) {
+				if (_dependencies[0][0].ModId.Equals("-")) {
 					return null;
 				}
-				return dependencies_;
+				return _dependencies;
 			}
 			return ModInfo.Dependencies;
 		}
@@ -872,7 +868,7 @@ namespace YobaLoncher {
 	}
 
 	internal static class ModUtils {
-		internal static List<ModDep[]> parseDependancies(List<string[]> strDeps) {
+		internal static List<ModDep[]> ParseDependencies(List<string[]> strDeps) {
 			if (strDeps != null) {
 				List<ModDep[]> deps = new List<ModDep[]>();
 				foreach (string[] dep in strDeps) {
@@ -898,7 +894,7 @@ namespace YobaLoncher {
 			}
 			return null;
 		}
-		internal static List<ModDep> parseConflicts(List<string> strCons) {
+		internal static List<ModDep> ParseConflicts(List<string> strCons) {
 			if (strCons != null) {
 				List<ModDep> cons = new List<ModDep>();
 				foreach (string mod in strCons) {
@@ -960,8 +956,8 @@ namespace YobaLoncher {
 			DetailedDescription = rmi.DetailedDescription;
 			Screenshots = rmi.Screenshots;
 
-			Dependencies = ModUtils.parseDependancies(rmi.Dependencies);
-			Conflicts = ModUtils.parseConflicts(rmi.Conflicts);
+			Dependencies = ModUtils.ParseDependencies(rmi.Dependencies);
+			Conflicts = ModUtils.ParseConflicts(rmi.Conflicts);
 
 			IsHidden = rmi.IsHidden;
 			GroupId = rmi.GroupId;
@@ -1157,7 +1153,7 @@ namespace YobaLoncher {
 									oldVersionFiles.Add(fi);
 								}
 							}
-							MoveToDisabled(oldVersionFiles);
+							_moveToDisabled(oldVersionFiles);
 						}
 					}
 				}
@@ -1246,7 +1242,7 @@ namespace YobaLoncher {
 				foreach (FileInfo fi in CurrentVersion.Files) {
 					List<ModInfo> usedByMods = fi.UsedByMods.FindAll(mi => mi != this && mi.ModConfigurationInfo != null);
 					if (usedByMods.Count > 0) {
-						MoveFileToDisabled(fi, disdirs);
+						_moveFileToDisabled(fi, disdirs);
 					}
 					else {
 						File.Delete(prefix + fi.Path);
@@ -1292,18 +1288,18 @@ namespace YobaLoncher {
 		}
 
 		public void Disable() {
-			MoveToDisabled(CurrentVersion.Files);
+			_moveToDisabled(CurrentVersion.Files);
 			ModConfigurationInfo.Active = false;
 			LauncherConfig.SaveMods();
 		}
 
-		private void MoveToDisabled(List<FileInfo> files) {
+		private void _moveToDisabled(List<FileInfo> files) {
 			if (files != null) {
 				try {
 					Directory.CreateDirectory(Program.ModsDisabledPath);
 					List<string> disdirs = new List<string>();
 					foreach (FileInfo fi in files) {
-						MoveFileToDisabled(fi, disdirs);
+						_moveFileToDisabled(fi, disdirs);
 					}
 				}
 				catch (Exception ex) {
@@ -1314,7 +1310,7 @@ namespace YobaLoncher {
 			}
 		}
 
-		private void MoveFileToDisabled(FileInfo fi, List<string> disdirs) {
+		private void _moveFileToDisabled(FileInfo fi, List<string> disdirs) {
 			if (File.Exists(Program.GamePath + fi.Path)) {
 				if (null == fi.UsedByMods.Find(mi => mi != this && mi.ModConfigurationInfo != null && mi.ModConfigurationInfo.Active)) {
 					string path = fi.Path.Replace('/', '\\');
@@ -1347,7 +1343,7 @@ namespace YobaLoncher {
 				}
 			}
 
-			MoveToDisabled(oldVersionFiles);
+			_moveToDisabled(oldVersionFiles);
 			YobaDialog.ShowDialog(String.Format(Locale.Get("ModForOldVerDisabled"), ModConfigurationInfo.Name));
 			ModConfigurationInfo.Active = false;
 			ModConfigurationInfo = null;

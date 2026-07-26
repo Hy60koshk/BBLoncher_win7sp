@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using SHDocVw;
 
 namespace YobaLoncher {
-	public partial class MainForm : Form, DraggableForm {
+	public partial class MainForm : Form, IDraggableForm {
 		public const int WM_NCLBUTTONDOWN = 0xA1;
 		public const int HT_CAPTION = 0x2;
 		[DllImport("user32.dll")]
@@ -175,7 +175,7 @@ namespace YobaLoncher {
 				draggingPanel.UpdateSize(windowW, 24);
 				mainBrowser.Location = new Point(1, 0);
 				mainBrowser.ObjectForScripting = YobaWebController.Instance;
-				YobaWebController.Instance.Form = this;
+				YobaWebController.Instance._form = this;
 				mainBrowser.Navigated += MainBrowser_Navigated;
 				mainBrowser.Navigating += webBrowser_Navigating;
 
@@ -234,7 +234,7 @@ namespace YobaLoncher {
 							modsToUpdate_.AddLast(mi);
 							mi.DlInProgress = true;
 							UpdateModsWebView();
-							DownloadNextMod();
+							_downloadNextMod();
 						}
 					}
 				}
@@ -410,7 +410,7 @@ namespace YobaLoncher {
 						}
 						UpdateModsWebView();
 						if (!UpdateInProgress_) {
-							DownloadNextMod();
+							_downloadNextMod();
 						}
 						allowRun = false;
 					}
@@ -593,7 +593,7 @@ namespace YobaLoncher {
 						DownloadNext();
 					}
 					else {
-						DownloadNextMod();
+						_downloadNextMod();
 					}
 					return;
 				}
@@ -640,7 +640,7 @@ namespace YobaLoncher {
 				DownloadNext();
 			}
 			else {
-				DownloadNextMod();
+				_downloadNextMod();
 			}
 		}
 
@@ -665,7 +665,7 @@ namespace YobaLoncher {
 						filename = ThePath + fileInfo.Path.Replace('/', '\\');
 
 						string errorStr = await Task<string>.Run(() => {
-							return MoveUploadedFile(filename, fileInfo);
+							return _moveUploadedFile(filename, fileInfo);
 						});
 						if (errorStr != null) {
 							failedFiles.Add(errorStr);
@@ -678,11 +678,11 @@ namespace YobaLoncher {
 						UpdateStatusWebView();
 						if (failedFiles.Count > 0) {
 							if (YobaDialog.ShowDialog(String.Format(Locale.Get("UpdateHashCheckFailed"), String.Join("\r\n", failedFiles)), YobaDialog.YesNoBtns) == DialogResult.Yes) {
-								DownloadNextMod();
+								_downloadNextMod();
 							}
 						}
 						else {
-							DownloadNextMod();
+							_downloadNextMod();
 						}
 					}
 					else {
@@ -897,7 +897,7 @@ namespace YobaLoncher {
 				PreloaderForm pf = new PreloaderForm(null, true);
 				pf.Show();
 				pf.InitProgressTracker();
-				Program.LoncherSettings.MainPage = await pf.getMainPageData();
+				Program.LoncherSettings.MainPage = await pf.GetMainPageData();
 				pf.Hide();
 				pf.Dispose();
 				UpdateMainWebView();

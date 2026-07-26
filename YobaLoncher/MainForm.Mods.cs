@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 namespace YobaLoncher {
 	public partial class MainForm {
 
-		private string MoveUploadedFile(string filename, FileInfo fileInfo) {
+		private LinkedListNode<ModInfo> _currentMod = null;
+
+		private string _moveUploadedFile(string filename, FileInfo fileInfo) {
 			string dirpath = filename.Substring(0, filename.LastIndexOf('\\'));
 			Directory.CreateDirectory(dirpath);
 			if (File.Exists(filename)) {
@@ -26,7 +28,7 @@ namespace YobaLoncher {
 			return null;
 		}
 
-		private async Task<bool> FinalizeModDownload(ModInfo modInfo) {
+		private async Task<bool> _finalizeModDownload(ModInfo modInfo) {
 			List<FileInfo> files = modInfo.FilesForUpdate;
 			int progressStep = progressBarInfo_.MaxValue / files.Count;
 			bool success = false;
@@ -41,7 +43,7 @@ namespace YobaLoncher {
 					}
 					filename = ThePath + fi.Path.Replace('/', '\\');
 					string errorStr = await Task<string>.Run(() => {
-						return MoveUploadedFile(filename, fi);
+						return _moveUploadedFile(filename, fi);
 					});
 					if (errorStr != null) {
 						failedFiles.Add(errorStr);
@@ -64,49 +66,47 @@ namespace YobaLoncher {
 			return success;
 		}
 
-		private LinkedListNode<ModInfo> currentMod_ = null;
-
-		private async void DownloadNextMod() {
+		private async void _downloadNextMod() {
 			if (currentFile_ is null) {
-				if (currentMod_ is null) {
+				if (_currentMod is null) {
 					if (modsToUpdate_ == null || modsToUpdate_.Count < 1) {
-						FinishModDownload();
+						_finishModDownload();
 						return;
 					}
 					LaunchButtonEnabled_ = false;
 					UpdateLaunchButton();
-					currentMod_ = modsToUpdate_.First;
+					_currentMod = modsToUpdate_.First;
 					downloadProgressTracker_.Reset();
 				}
 				else {
-					currentMod_ = currentMod_.Next;
+					_currentMod = _currentMod.Next;
 				}
 			}
-			if (currentMod_ != null) {
+			if (_currentMod != null) {
 				if (currentFile_ is null) {
 					LinkedList<FileInfo> modFileList = new LinkedList<FileInfo>(
-						currentMod_.Value.FilesForUpdate.FindAll(fi => !fi.IsHashOk && fi.HasValidInfo)
+						_currentMod.Value.FilesForUpdate.FindAll(fi => !fi.IsHashOk && fi.HasValidInfo)
 					);
 					if (modFileList.Count > 0) {
 						currentFile_ = modFileList.First;
 						DownloadFile(currentFile_.Value);
 					}
 					else {
-						currentMod_.Value.Install();
-						currentMod_.Value.IsUpdateAvailable = false;
-						DownloadNextMod();
+						_currentMod.Value.Install();
+						_currentMod.Value.IsUpdateAvailable = false;
+						_downloadNextMod();
 					}
 				}
 				else {
 					currentFile_ = currentFile_.Next;
 					if (currentFile_ is null) {
-						UpdateProgressBar(0, Locale.Get("StatusCopyingFiles") + " // " + currentMod_.Value.VersionedName);
-						if (await FinalizeModDownload(currentMod_.Value)) {
-							DownloadNextMod();
+						UpdateProgressBar(0, Locale.Get("StatusCopyingFiles") + " // " + _currentMod.Value.VersionedName);
+						if (await _finalizeModDownload(_currentMod.Value)) {
+							_downloadNextMod();
 						}
 						else {
 							UpdateProgressBar(0, Locale.Get("ModInstallationError"));
-							FinishModDownload();
+							_finishModDownload();
 						}
 					}
 					else {
@@ -116,13 +116,13 @@ namespace YobaLoncher {
 			}
 			else {
 				UpdateProgressBar(progressBarInfo_.MaxValue, Locale.Get("ModInstallationDone"));
-				FinishModDownload();
+				_finishModDownload();
 			}
 		}
 
-		private void FinishModDownload() {
+		private void _finishModDownload() {
 			currentFile_ = null;
-			currentMod_ = null;
+			_currentMod = null;
 			modsToUpdate_ = null;
 			foreach (ModInfo mi in Program.LoncherSettings.Mods) {
 				mi.DlInProgress = false;

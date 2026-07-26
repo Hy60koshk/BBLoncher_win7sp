@@ -62,7 +62,7 @@
 			this.button1.TabIndex = 1;
 			this.button1.Text = "Browse...";
 			this.button1.UseVisualStyleBackColor = false;
-			this.button1.Click += new System.EventHandler(this.button1_Click);
+			this.button1.Click += new System.EventHandler(this._button1_Click);
 			// 
 			// button2
 			// 
@@ -77,7 +77,7 @@
 			this.button2.TabIndex = 2;
 			this.button2.Text = "Proceed";
 			this.button2.UseVisualStyleBackColor = false;
-			this.button2.Click += new System.EventHandler(this.button2_Click);
+			this.button2.Click += new System.EventHandler(this._button2_Click);
 			// 
 			// closeButton
 			// 
@@ -121,7 +121,7 @@
 			this.draggingPanel.Name = "draggingPanel";
 			this.draggingPanel.Size = new System.Drawing.Size(527, 24);
 			this.draggingPanel.TabIndex = 300;
-			this.draggingPanel.MouseDown += new System.Windows.Forms.MouseEventHandler(this.draggingPanel_MouseDown);
+			this.draggingPanel.MouseDown += new System.Windows.Forms.MouseEventHandler(this._draggingPanel_MouseDown);
 			// 
 			// GamePathSelectForm
 			// 
@@ -144,7 +144,7 @@
 			this.Name = "GamePathSelectForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "Select the game folder";
-			this.Shown += new System.EventHandler(this.GamePathSelectForm_Shown);
+			this.Shown += new System.EventHandler(this._gamePathSelectForm_Shown);
 			this.panel1.ResumeLayout(false);
 			this.panel1.PerformLayout();
 			this.ResumeLayout(false);

@@ -21,52 +21,61 @@ namespace YobaLoncher {
 			return new YobaDialog(msg, buttons).ShowDialog();
 		}
 
-		private static UIElement[] yesNoBtns_;
-		private static UIElement[] abortIgnoreBtns_;
-		private static UIElement[] OKCopyStackBtns_;
+		private static UIElement[] _yesNoBtns;
+		private static UIElement[] _abortIgnoreBtns;
+		private static UIElement[] _okCopyStackBtns;
 
 		internal static UIElement[] YesNoBtns {
 			get {
-				return yesNoBtns_ != null ? yesNoBtns_ : (yesNoBtns_ = new UIElement[] {
-					new UIElement() {
-						Caption = Locale.Get("Yes"), Result = DialogResult.Yes
-					},
-					new UIElement() {
-						Caption = Locale.Get("No"), Result = DialogResult.No
-					}
-				});
+				if (_yesNoBtns is null) {
+					_yesNoBtns = new UIElement[] {
+						new UIElement() {
+							Caption = Locale.Get("Yes"), Result = DialogResult.Yes
+						},
+						new UIElement() {
+							Caption = Locale.Get("No"), Result = DialogResult.No
+						}
+					};
+				}
+				return _yesNoBtns;
 			}
 		}
 		internal static UIElement[] AbortIgnoreBtns {
 			get {
-				return abortIgnoreBtns_ != null ? abortIgnoreBtns_ : (abortIgnoreBtns_ = new UIElement[] {
-					new UIElement() {
-						Caption = Locale.Get("ExitApp"), Result = DialogResult.Abort
-					},
-					new UIElement() {
-						Caption = Locale.Get("Ignore"), Result = DialogResult.Ignore
-					}
-				});
+				if (_abortIgnoreBtns is null) {
+					_abortIgnoreBtns = new UIElement[] {
+						new UIElement() {
+							Caption = Locale.Get("ExitApp"), Result = DialogResult.Abort
+						},
+						new UIElement() {
+							Caption = Locale.Get("Ignore"), Result = DialogResult.Ignore
+						}
+					};
+				}
+				return _abortIgnoreBtns;
 			}
 		}
 		internal static UIElement[] OKCopyStackBtns {
 			get {
-				return OKCopyStackBtns_ != null ? OKCopyStackBtns_ : (OKCopyStackBtns_ = new UIElement[] {
-					new UIElement() {
-						Caption = Locale.Get("OK")
-						, Result = DialogResult.OK
-						, Size = new Vector() {
-							Y = 38, X = 170
+				if (_okCopyStackBtns is null) {
+					_okCopyStackBtns = new UIElement[] {
+						new UIElement() {
+							Caption = Locale.Get("OK")
+							, Result = DialogResult.OK
+							, Size = new Vector() {
+								Y = 38, X = 170
+							}
+						},
+						new UIElement() {
+							Caption = Locale.Get("CopyStackTrace")
+							, Result = DialogResult.Retry
+							, Size = new Vector() {
+								Y = 38, X = 170
+							}
 						}
-					},
-					new UIElement() {
-						Caption = Locale.Get("CopyStackTrace")
-						, Result = DialogResult.Retry
-						, Size = new Vector() {
-							Y = 38, X = 170
-						}
-					}
-				});
+					};
+				}
+				return _okCopyStackBtns;
 			}
 		}
 
@@ -75,18 +84,18 @@ namespace YobaLoncher {
 		public YobaDialog() : this("", null) { }
 		public YobaDialog(string message) : this(message, null) { }
 		internal YobaDialog(string message, UIElement[] buttons) {
-			startInit(message);
-			initButtons(buttons);
+			_startInit(message);
+			_initButtons(buttons);
 		}
 		internal YobaDialog(Size size) : this("", size, null) { }
 		internal YobaDialog(string message, Size size) : this(message, size, null) { }
 		internal YobaDialog(Size size, UIElement[] buttons) : this("", size, buttons) { }
 		internal YobaDialog(string message, Size size, UIElement[] buttons) {
-			startInit(message);
+			_startInit(message);
 			Size = size;
 			MinimumSize = size;
 			MaximumSize = size;
-			initButtons(buttons);
+			_initButtons(buttons);
 		}
 
 		private int _originalWinStyle = -1;
@@ -113,7 +122,7 @@ namespace YobaLoncher {
 			//e.Graphics.DrawRectangle(pen, rect);
 		}
 
-		private void startInit(string message) {
+		private void _startInit(string message) {
 			InitializeComponent();
 			_originalWinStyle = NativeWinAPI.GetWindowLong(this.Handle, NativeWinAPI.GWL_EXSTYLE);
 			NativeWinAPI.SetWindowLong(this.Handle, NativeWinAPI.GWL_EXSTYLE, _originalWinStyle | NativeWinAPI.WS_EX_COMPOSITED);
@@ -133,7 +142,7 @@ namespace YobaLoncher {
 			MaximumSize = Size;
 		}
 
-		private void initButtons(UIElement[] buttons) {
+		private void _initButtons(UIElement[] buttons) {
 			SuspendLayout();
 			if (buttons == null) {
 				YobaButton button = new YobaButton();
@@ -192,12 +201,12 @@ namespace YobaLoncher {
 			draggingPanel.Size = new Size(Size.Width - 32, 24);
 			ResumeLayout(false);
 		}
-		private void onBtnClick(object s, EventArgs args) {
+		private void _onBtnClick(object s, EventArgs args) {
 			YobaButton _this = (YobaButton)s;
 			((YobaDialog)_this.Parent).DialogResult = _this.DialogResult;
 		}
 
-		private void draggingPanel_MouseDown(object sender, MouseEventArgs e) {
+		private void _draggingPanel_MouseDown(object sender, MouseEventArgs e) {
 			if (e.Button == MouseButtons.Left) {
 				ReleaseCapture();
 				SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
@@ -273,8 +282,8 @@ namespace YobaLoncher {
 							styleInfo.BgImageClick.ImageLayout = layout;
 						}
 					}
-					MouseDown += YobaButtonAbs_MouseDownBGChange;
-					MouseUp += YobaButtonAbs_MouseUpBGChange;
+					MouseDown += _yobaBtn_MouseDownBGChange;
+					MouseUp += _yobaBtn_MouseUpBGChange;
 				}
 				if (styleInfo.BgImageHover != null && YU.StringHasText(styleInfo.BgImageHover.Path)) {
 					styleInfo.BgImageHover.ImageLayout = ImageLayout.Stretch;
@@ -283,27 +292,27 @@ namespace YobaLoncher {
 							styleInfo.BgImageHover.ImageLayout = layout;
 						}
 					}
-					MouseEnter += YobaButtonAbs_MouseHoverBGChange;
-					MouseLeave += YobaButtonAbs_MouseLeaveBGChange;
+					MouseEnter += _yobaBtn_MouseHoverBGChange;
+					MouseLeave += _yobaBtn_MouseLeaveBGChange;
 				}
 			}
 		}
 
-		private void YobaButtonAbs_MouseLeaveBGChange(object sender, EventArgs e) {
+		private void _yobaBtn_MouseLeaveBGChange(object sender, EventArgs e) {
 			MouseHoverState = false;
 			BackgroundImageLayout = StyleInfo.BgImage.ImageLayout;
 			BackgroundImage = YU.ReadBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImage.Path);
 		}
-		private void YobaButtonAbs_MouseHoverBGChange(object sender, EventArgs e) {
+		private void _yobaBtn_MouseHoverBGChange(object sender, EventArgs e) {
 			MouseHoverState = true;
 			BackgroundImageLayout = StyleInfo.BgImageHover.ImageLayout;
 			BackgroundImage = YU.ReadBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImageHover.Path);
 		}
-		private void YobaButtonAbs_MouseDownBGChange(object sender, EventArgs e) {
+		private void _yobaBtn_MouseDownBGChange(object sender, EventArgs e) {
 			BackgroundImageLayout = StyleInfo.BgImageClick.ImageLayout;
 			BackgroundImage = YU.ReadBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImageClick.Path);
 		}
-		private void YobaButtonAbs_MouseUpBGChange(object sender, EventArgs e) {
+		private void _yobaBtn_MouseUpBGChange(object sender, EventArgs e) {
 			if (MouseHoverState) {
 				BackgroundImageLayout = StyleInfo.BgImageHover.ImageLayout;
 				BackgroundImage = YU.ReadBitmap(PreloaderForm.IMGPATH + StyleInfo.BgImageHover.Path);
@@ -395,27 +404,29 @@ namespace YobaLoncher {
 
 	internal class YobaComboBox : ComboBox {
 		private const int WM_PAINT = 0xF;
-		private int buttonWidth = SystemInformation.HorizontalScrollBarArrowWidth + 4;
-		Color borderColor = Color.Gray;
+		private Color _borderColor = Color.Gray;
+		private int _buttonWidth = SystemInformation.HorizontalScrollBarArrowWidth + 4;
+
 		public Color BorderColor {
 			get {
-				return borderColor;
+				return _borderColor;
 			}
 			set {
-				borderColor = value;
+				_borderColor = value;
 				Invalidate();
 			}
 		}
+
 		protected override void WndProc(ref Message m) {
 			base.WndProc(ref m);
 			if (m.Msg == WM_PAINT && DropDownStyle != ComboBoxStyle.Simple) {
-				using (var g = Graphics.FromHwnd(Handle)) {
-					using (var p = new Pen(BorderColor)) {
-						using (var brush = new SolidBrush(BackColor)) {
-							g.FillRectangle(brush, Width - buttonWidth, 0, buttonWidth, Height);
+				using (Graphics g = Graphics.FromHwnd(Handle)) {
+					using (Pen p = new Pen(BorderColor)) {
+						using (SolidBrush brush = new SolidBrush(BackColor)) {
+							g.FillRectangle(brush, Width - _buttonWidth, 0, _buttonWidth, Height);
 						}
-						using (var brush = new SolidBrush(ForeColor)) {
-							float xcenter = (float)Width - (float)buttonWidth / 2;
+						using (SolidBrush brush = new SolidBrush(ForeColor)) {
+							float xcenter = (float)Width - (float)_buttonWidth / 2;
 							float ycenter = (float)Height / 2;
 							g.FillPolygon(brush, new PointF[] {
 								new PointF(xcenter - 4, ycenter)
@@ -424,7 +435,7 @@ namespace YobaLoncher {
 							});
 						}
 						g.DrawRectangle(p, 0, 0, Width - 1, Height - 1);
-						g.DrawLine(p, Width - buttonWidth, 0, Width - buttonWidth, Height);
+						g.DrawLine(p, Width - _buttonWidth, 0, Width - _buttonWidth, Height);
 					}
 				}
 			}
@@ -458,13 +469,13 @@ namespace YobaLoncher {
 
 	internal class YobaProgressBar : Panel {
 
-		private int value = 0;
-		private int maxValue = 100;
-		private bool overflow = false;
-		private Pen penBG_ = new Pen(Color.FromArgb(62, 63, 64), 1);
-		private Pen penBorder_ = new Pen(Color.FromArgb(100, 101, 102), 1);
-		private Pen penValue_ = new Pen(Color.FromArgb(10, 154, 57), 1);
-		private Pen penOverflow_ = new Pen(Color.FromArgb(12, 113, 160), 1);
+		private int _value = 0;
+		private int _maxValue = 100;
+		private bool _overflow = false;
+		private Pen _penBG = new Pen(Color.FromArgb(62, 63, 64), 1);
+		private Pen _penBorder = new Pen(Color.FromArgb(100, 101, 102), 1);
+		private Pen _penValue = new Pen(Color.FromArgb(10, 154, 57), 1);
+		private Pen _penOverflow = new Pen(Color.FromArgb(12, 113, 160), 1);
 
 		public YobaProgressBar() : base() {
 			BackColor = Color.FromArgb(62, 63, 64);
@@ -478,67 +489,67 @@ namespace YobaLoncher {
 			base.OnPaint(e);
 
 			Rectangle rect = new Rectangle(0, 0, ClientSize.Width - 1, ClientSize.Height - 1);
-			e.Graphics.DrawRectangle(penBorder_, rect);
+			e.Graphics.DrawRectangle(_penBorder, rect);
 			int valueWidth;
-			if (value > maxValue) {
-				overflow = true;
-				value = value % maxValue;
-				if (value == 0) {
-					value = maxValue;
+			if (_value > _maxValue) {
+				_overflow = true;
+				_value = _value % _maxValue;
+				if (_value == 0) {
+					_value = _maxValue;
 				}
 			}
 			rect = new Rectangle(1, 1, ClientSize.Width - 2, ClientSize.Height - 2);
 
-			if (value == maxValue) {
-				e.Graphics.FillRectangle((overflow ? penOverflow_ : penValue_).Brush, rect);
+			if (_value == _maxValue) {
+				e.Graphics.FillRectangle((_overflow ? _penOverflow : _penValue).Brush, rect);
 			}
 			else {
-				e.Graphics.FillRectangle(penBG_.Brush, rect);
-				valueWidth = (ClientSize.Width - 2) / maxValue * value;
+				e.Graphics.FillRectangle(_penBG.Brush, rect);
+				valueWidth = (ClientSize.Width - 2) / _maxValue * _value;
 				if (valueWidth > 0) {
-					e.Graphics.FillRectangle((overflow ? penOverflow_ : penValue_).Brush, new Rectangle(1, 1, valueWidth, ClientSize.Height - 2));
+					e.Graphics.FillRectangle((_overflow ? _penOverflow : _penValue).Brush, new Rectangle(1, 1, valueWidth, ClientSize.Height - 2));
 				}
 			}
 		}
 
 		public int Value {
-			get => value;
+			get => _value;
 			set {
-				if (!overflow) {
-					if (value == this.value) {
+				if (!_overflow) {
+					if (value == this._value) {
 						return;
 					}
 					else if (value < 0) {
-						if (this.value > 0) {
-							this.value = 0;
+						if (this._value > 0) {
+							this._value = 0;
 							this.Update();
 						}
 						return;
 					}
 				}
 				else if (value < 0) {
-					this.value -= value;
-					if (this.value < 0) {
-						this.value = maxValue - this.value % maxValue;
+					this._value -= value;
+					if (this._value < 0) {
+						this._value = _maxValue - this._value % _maxValue;
 					}
 					this.Update();
 					return;
 				}
-				overflow = false;
-				this.value = value;
+				_overflow = false;
+				this._value = value;
 				this.Refresh();
 			}
 		}
 		public int MaxValue {
-			get => maxValue;
+			get => _maxValue;
 			set {
-				if (value == this.maxValue) {
+				if (value == this._maxValue) {
 					return;
 				}
 				if (value < 1) {
 					throw new Exception("The maxinun value of a progress bar cannot be less than 1.");
 				}
-				this.maxValue = value;
+				this._maxValue = value;
 				this.Update();
 			}
 		}

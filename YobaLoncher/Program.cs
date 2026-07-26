@@ -8,17 +8,19 @@ using System.Windows.Forms;
 namespace YobaLoncher {
 	static class Program {
 #if DEBUG
-		public readonly static string SETTINGS_URL = "https://koshk.sbs/battlebrothers/settings_debug.json";
+		public const string SETTINGS_URL = "https://koshk.sbs/battlebrothers/settings_debug.json";
 #else
-		public readonly static string SETTINGS_URL = "https://koshk.sbs/battlebrothers/settings.json";
+		public const string SETTINGS_URL = "https://koshk.sbs/battlebrothers/settings.json";
 #endif
 		public static LauncherData LoncherSettings;
 		public static bool OfflineMode = false;
 		public static string PreviousVersionHash = null;
 		public static bool FirstRun = false;
-		public static readonly string LoncherPath = Application.ExecutablePath.Substring(0, Application.ExecutablePath.LastIndexOf('\\') + 1);
-		public static readonly string LoncherDataPath = LoncherPath + @"loncherData\";
-		public static string GamePath = "" + LoncherPath;
+		public static readonly string LONCHER_PATH = Application.ExecutablePath.Substring(
+			0, Application.ExecutablePath.LastIndexOf('\\') + 1
+		);
+		public static readonly string LONCHER_DATA_PATH = LONCHER_PATH + @"loncherData\";
+		public static string GamePath = "" + LONCHER_PATH;
 		public static string GameVersion = null;
 		public static string ModsBackupPath = null;
 		public static string ModsDisabledPath = null;
@@ -26,11 +28,13 @@ namespace YobaLoncher {
 
 		public static string Disclaimer => _disclaimer;
 		public static string LoncherName => _loncherName;
-		public static string VersionInfo => String.Format(_about, _version, _buildNumber, _buildVersion);
-		public static string VersionInfoShort => String.Format("{0} {1} ({2} {3})", _loncherName, _buildVersion, _version, _buildNumber);
+		public static string VersionInfo => String.Format(_about, _VERSION, _buildNumber, _buildVersion);
+		public static string VersionInfoShort => String.Format(
+			"{0} {1} ({2} {3})", _loncherName, _buildVersion, _VERSION, _buildNumber
+		);
 
+		private const string _VERSION = "1.1.1.9-win7";
 		private static string _loncherName = "YobaLoncher";
-		private static string _version = "1.1.1.9-win7";
 		private static string _buildVersion = "1.1";
 		private static string _buildNumber = "";
 		private static string _about = "YobaLöncher {0}-{1}";
@@ -42,9 +46,9 @@ namespace YobaLoncher {
 		[STAThread]
 		static void Main(string[] args) {
 			try {
-				if (!Directory.Exists(LoncherDataPath)) {
+				if (!Directory.Exists(LONCHER_DATA_PATH)) {
 					FirstRun = true;
-					Directory.CreateDirectory(LoncherDataPath);
+					Directory.CreateDirectory(LONCHER_DATA_PATH);
 				}
 				try {
 					ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls

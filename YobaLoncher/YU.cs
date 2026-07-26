@@ -14,7 +14,7 @@ namespace YobaLoncher {
 			return s != null && s.Length > 0;
 		}
 
-		private static string[] bytePows = new string[] { "B", "KB", "MB", "GB", "TB", "PB", "ЁB" };
+		private static readonly string[] _BYTE_POWS = new string[] { "B", "KB", "MB", "GB", "TB", "PB", "ЁB" };
 
 		public static string FormatFileSize(double size) {
 			int pow = 0;
@@ -22,12 +22,12 @@ namespace YobaLoncher {
 				size /= 1024;
 				pow++;
 			}
-			return Math.Round(size, 1).ToString() + ' ' + bytePows[pow];
+			return Math.Round(size, 1).ToString() + ' ' + _BYTE_POWS[pow];
 		}
 
 		public static void Log(string text, int logLevel) {
 			if (LauncherConfig.LoggingLevel >= logLevel) {
-				File.AppendAllText(Program.LoncherDataPath + "log.txt", DateTime.Now.ToString("yyyy.dd.MM HH:mm:ss") + " | " + text + "\r\n");
+				File.AppendAllText(Program.LONCHER_DATA_PATH + "log.txt", DateTime.Now.ToString("yyyy.dd.MM HH:mm:ss") + " | " + text + "\r\n");
 			}
 		}
 		public static void LogException(Exception ex) {

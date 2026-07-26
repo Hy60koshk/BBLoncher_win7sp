@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace YobaLoncher {
 	class Locale {
-		private static Dictionary<string, string> CustomLoc = new Dictionary<string, string>();
+		private static readonly Dictionary<string, string> _customLoc = new Dictionary<string, string>();
+		
 		public static void LoadCustomLoc(string[] lines) {
 			foreach (string line in lines) {
 				string[] keyval = line.Split('=');
@@ -11,11 +12,11 @@ namespace YobaLoncher {
 					string key = keyval[0].Trim();
 					if (key.Length > 0) {
 						string value = keyval[1].Trim().Replace("[n]", "\r\n");
-						if (CustomLoc.ContainsKey(key)) {
-							CustomLoc[key] = value;
+						if (_customLoc.ContainsKey(key)) {
+							_customLoc[key] = value;
 						}
 						else {
-							CustomLoc.Add(key, value);
+							_customLoc.Add(key, value);
 						}
 					}
 				}
@@ -27,16 +28,16 @@ namespace YobaLoncher {
 		}
 
 		public static string Get(string key, string def) {
-			if (CustomLoc.ContainsKey(key)) {
-				return CustomLoc[key];
+			if (_customLoc.ContainsKey(key)) {
+				return _customLoc[key];
 			}
-			if (DefaultLoc.ContainsKey(key)) {
-				return DefaultLoc[key];
+			if (_DEFAULT_LOC.ContainsKey(key)) {
+				return _DEFAULT_LOC[key];
 			}
 			return def;
 		}
 
-		private static Dictionary<string, string> DefaultLoc = new Dictionary<string, string>() {
+		private static readonly Dictionary<string, string> _DEFAULT_LOC = new Dictionary<string, string>() {
 			{ "LaunchBtn", "Launch!" }
 			, { "UpdateBtn", "Update" }
 			, { "OK", "OK" }

@@ -13,12 +13,12 @@ namespace YobaLoncher {
 		public static extern bool ReleaseCapture();
 
 		public string ThePath = "";
-		private CommonOpenFileDialog folderBrowserDialog;
+		private readonly CommonOpenFileDialog _folderBrowserDialog;
 
 		public GamePathSelectForm() {
 			InitializeComponent();
 
-			folderBrowserDialog = new CommonOpenFileDialog() {
+			_folderBrowserDialog = new CommonOpenFileDialog() {
 				IsFolderPicker = true
 			};
 
@@ -36,23 +36,23 @@ namespace YobaLoncher {
 			closeButton.UpdateLocation();
 		}
 
-		private void button1_Click(object sender, EventArgs e) {
-			folderBrowserDialog.InitialDirectory = textBox1.Text;
-			if (folderBrowserDialog.ShowDialog() == CommonFileDialogResult.Ok) {
-				textBox1.Text = folderBrowserDialog.FileName;
+		private void _button1_Click(object sender, EventArgs e) {
+			_folderBrowserDialog.InitialDirectory = textBox1.Text;
+			if (_folderBrowserDialog.ShowDialog() == CommonFileDialogResult.Ok) {
+				textBox1.Text = _folderBrowserDialog.FileName;
 			}
 		}
 
-		private void GamePathSelectForm_Shown(object sender, EventArgs e) {
+		private void _gamePathSelectForm_Shown(object sender, EventArgs e) {
 			textBox1.Text = ThePath;
 		}
 
-		private void button2_Click(object sender, EventArgs e) {
+		private void _button2_Click(object sender, EventArgs e) {
 			ThePath = textBox1.Text;
 			DialogResult = DialogResult.Yes;
 		}
 
-		private void draggingPanel_MouseDown(object sender, MouseEventArgs e) {
+		private void _draggingPanel_MouseDown(object sender, MouseEventArgs e) {
 			if (e.Button == MouseButtons.Left) {
 				ReleaseCapture();
 				SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);

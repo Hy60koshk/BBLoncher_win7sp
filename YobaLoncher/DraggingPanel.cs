@@ -4,12 +4,12 @@ using System.Windows.Forms;
 
 namespace YobaLoncher {
 
-	internal interface DraggableForm {
+	internal interface IDraggableForm {
 		void InitDrag();
 		void ToggleMaximized();
 	}
 
-	internal class DraggingPanel<T> : Panel where T : DraggableForm {
+	internal class DraggingPanel<T> : Panel where T : IDraggableForm {
 		public int WidthSpace = 128;
 		private int _initWidth = 200;
 		private int _initHeight = 24;
@@ -51,10 +51,10 @@ namespace YobaLoncher {
 
 		public void AddDragging(T parent) {
 			_parent = parent;
-			this.MouseDown += new MouseEventHandler(draggingPanel_MouseDown);
+			this.MouseDown += new MouseEventHandler(_draggingPanel_MouseDown);
 		}
 
-		private void draggingPanel_MouseDown(object sender, MouseEventArgs e) {
+		private void _draggingPanel_MouseDown(object sender, MouseEventArgs e) {
 			if (e.Button == MouseButtons.Left) {
 				DateTime now = DateTime.Now;
 

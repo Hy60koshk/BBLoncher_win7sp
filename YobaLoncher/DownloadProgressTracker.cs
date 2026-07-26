@@ -4,44 +4,44 @@ using System.Linq;
 
 namespace YobaLoncher {
 	class DownloadProgressTracker {
-		private long totalFileSize_;
-		private readonly int sampleSize_;
-		private readonly TimeSpan valueDelay_;
+		private long _totalFileSize;
+		private readonly int _sampleSize;
+		private readonly TimeSpan _valueDelay;
 
-		private DateTime lastUpdateCalculated_;
-		private long previousProgress_;
+		private DateTime _lastUpdateCalculated;
+		private long _previousProgress;
 
-		private double cachedSpeed_;
+		private double _cachedSpeed;
 
-		private Queue<Tuple<DateTime, long>> changes_ = new Queue<Tuple<DateTime, long>>();
+		private Queue<Tuple<DateTime, long>> _changes = new Queue<Tuple<DateTime, long>>();
 
 		public DownloadProgressTracker(int sampleSize, TimeSpan valueDelay) {
-			lastUpdateCalculated_ = DateTime.Now;
-			sampleSize_ = sampleSize;
-			valueDelay_ = valueDelay;
+			_lastUpdateCalculated = DateTime.Now;
+			_sampleSize = sampleSize;
+			_valueDelay = valueDelay;
 		}
 
 		public void Reset() {
-			previousProgress_ = 0;
+			_previousProgress = 0;
 		}
 
 		public void SetProgress(long bytesReceived, long totalBytesToReceive) {
-			totalFileSize_ = totalBytesToReceive;
+			_totalFileSize = totalBytesToReceive;
 
-			long diff = bytesReceived - previousProgress_;
+			long diff = bytesReceived - _previousProgress;
 			if (diff <= 0) {
 				return;
 			}
-			previousProgress_ = bytesReceived;
+			_previousProgress = bytesReceived;
 
-			changes_.Enqueue(new Tuple<DateTime, long>(DateTime.Now, diff));
-			while (changes_.Count > sampleSize_) {
-				changes_.Dequeue();
+			_changes.Enqueue(new Tuple<DateTime, long>(DateTime.Now, diff));
+			while (_changes.Count > _sampleSize) {
+				_changes.Dequeue();
 			}
 		}
 
 		public double GetProgress() {
-			return previousProgress_ / (double)totalFileSize_;
+			return _previousProgress / (double)_totalFileSize;
 		}
 
 		public string GetProgressString() {
@@ -69,19 +69,19 @@ namespace YobaLoncher {
 		}
 
 		public double GetBytesPerSecond() {
-			if (DateTime.Now >= lastUpdateCalculated_ + valueDelay_) {
-				lastUpdateCalculated_ = DateTime.Now;
-				cachedSpeed_ = GetRateInternal();
+			if (DateTime.Now >= _lastUpdateCalculated + _valueDelay) {
+				_lastUpdateCalculated = DateTime.Now;
+				_cachedSpeed = _getRateInternal();
 			}
-			return cachedSpeed_;
+			return _cachedSpeed;
 		}
 
-		private double GetRateInternal() {
-			if (changes_.Count == 0) {
+		private double _getRateInternal() {
+			if (_changes.Count == 0) {
 				return 0;
 			}
-			TimeSpan timespan = changes_.Last().Item1 - changes_.First().Item1;
-			long bytes = changes_.Sum(t => t.Item2);
+			TimeSpan timespan = _changes.Last().Item1 - _changes.First().Item1;
+			long bytes = _changes.Sum(t => t.Item2);
 
 			double rate = bytes / timespan.TotalSeconds;
 

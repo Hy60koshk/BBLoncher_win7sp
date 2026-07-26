@@ -103,8 +103,8 @@
 			this.Name = "PreloaderForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "Yoba Loncher";
-			this.Shown += new System.EventHandler(this.PreloaderForm_ShownAsync);
-			this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.PreloaderForm_KeyUp);
+			this.Shown += new System.EventHandler(this._preloaderForm_ShownAsync);
+			this.KeyUp += new System.Windows.Forms.KeyEventHandler(this._preloaderForm_KeyUp);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
