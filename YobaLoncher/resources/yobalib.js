@@ -154,6 +154,12 @@ var YL = new (function () {
 	this.AppMinimize = function () {
 		window.external.Minimize()
 	}
+	this.AppMaximize = function () {
+		window.external.Maximize()
+	}
+	this.IsMaximized = function () {
+		return window.external.IsMaximized()
+	}
 	this.AppHelp = function () {
 		window.external.Help()
 	}
